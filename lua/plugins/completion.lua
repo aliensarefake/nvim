@@ -25,6 +25,9 @@ return {
     -- Load snippets
     require("luasnip.loaders.from_vscode").lazy_load()
     
+    -- Import comparators
+    local compare = require("cmp.config.compare")
+    
     cmp.setup({
       snippet = {
         expand = function(args)
@@ -35,6 +38,21 @@ return {
       window = {
         completion = cmp.config.window.bordered(),
         documentation = cmp.config.window.bordered(),
+      },
+      
+      sorting = {
+        priority_weight = 2,
+        comparators = {
+          compare.offset,
+          compare.exact,
+          compare.score,
+          compare.recently_used,
+          compare.locality,
+          compare.kind,
+          compare.sort_text,
+          compare.length,
+          compare.order,
+        },
       },
       
       mapping = cmp.mapping.preset.insert({
@@ -67,11 +85,38 @@ return {
       }),
       
       sources = cmp.config.sources({
-        { name = "nvim_lsp", priority = 1000 },
+        { 
+          name = "nvim_lsp", 
+          priority = 1000,
+          max_item_count = 20,
+          entry_filter = function(entry, ctx)
+            -- Filter out duplicates from LSP
+            local kind = require("cmp.types").lsp.CompletionItemKind[entry:get_kind()]
+            if kind == "Text" then
+              return false
+            end
+            return true
+          end,
+        },
         { name = "luasnip", priority = 750 },
-        { name = "buffer", priority = 500 },
+        { 
+          name = "buffer", 
+          priority = 500, 
+          max_item_count = 10,
+          option = {
+            get_bufnrs = function()
+              return vim.api.nvim_list_bufs()
+            end,
+          },
+        },
         { name = "path", priority = 250 },
       }),
+      
+      performance = {
+        debounce = 60,
+        throttle = 30,
+        fetching_timeout = 200,
+      },
       
       formatting = {
         format = function(entry, vim_item)

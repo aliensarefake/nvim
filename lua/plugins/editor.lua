@@ -56,7 +56,6 @@ return {
   -- Fuzzy finder
   {
     "nvim-telescope/telescope.nvim",
-    tag = "0.1.8",
     dependencies = {
       "nvim-lua/plenary.nvim",
       { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
@@ -68,9 +67,10 @@ return {
       telescope.setup({
         defaults = {
           prompt_prefix = " ",
-          selection_caret = " ",
+          selection_caret = "> ",
           path_display = { "truncate" },
           sorting_strategy = "ascending",
+          default_text = "",
           layout_config = {
             horizontal = {
               prompt_position = "top",

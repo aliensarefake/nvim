@@ -32,71 +32,11 @@ return {
         },
       })
       
-      -- Ensure LSP servers are installed
-      require("mason-lspconfig").setup({
-        ensure_installed = {
-          "clangd",      -- C/C++
-          "tsserver",    -- JavaScript/TypeScript
-          "pyright",     -- Python
-          "lua_ls",      -- Lua
-        },
-        automatic_installation = true,
-      })
-      
       -- LSP settings
       local lspconfig = require("lspconfig")
       
-      -- Global mappings
-      vim.keymap.set("n", "<leader>ld", vim.diagnostic.open_float, { desc = "Line diagnostics" })
-      vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "Previous diagnostic" })
-      vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "Next diagnostic" })
-      vim.keymap.set("n", "<leader>lq", vim.diagnostic.setloclist, { desc = "Diagnostic loclist" })
-      
-      -- Use LspAttach autocommand to only map after the language server attaches
-      vim.api.nvim_create_autocmd("LspAttach", {
-        group = vim.api.nvim_create_augroup("UserLspConfig", {}),
-        callback = function(ev)
-          -- Enable completion triggered by <c-x><c-o>
-          vim.bo[ev.buf].omnifunc = "v:lua.vim.lsp.omnifunc"
-          
-          -- Buffer local mappings
-          local opts = { buffer = ev.buf }
-          vim.keymap.set("n", "gD", vim.lsp.buf.declaration, vim.tbl_extend("force", opts, { desc = "Go to declaration" }))
-          vim.keymap.set("n", "gd", vim.lsp.buf.definition, vim.tbl_extend("force", opts, { desc = "Go to definition" }))
-          vim.keymap.set("n", "K", vim.lsp.buf.hover, vim.tbl_extend("force", opts, { desc = "Hover documentation" }))
-          vim.keymap.set("n", "gi", vim.lsp.buf.implementation, vim.tbl_extend("force", opts, { desc = "Go to implementation" }))
-          vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, vim.tbl_extend("force", opts, { desc = "Signature help" }))
-          vim.keymap.set("n", "<leader>wa", vim.lsp.buf.add_workspace_folder, vim.tbl_extend("force", opts, { desc = "Add workspace folder" }))
-          vim.keymap.set("n", "<leader>wr", vim.lsp.buf.remove_workspace_folder, vim.tbl_extend("force", opts, { desc = "Remove workspace folder" }))
-          vim.keymap.set("n", "<leader>wl", function()
-            print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-          end, vim.tbl_extend("force", opts, { desc = "List workspace folders" }))
-          vim.keymap.set("n", "<leader>D", vim.lsp.buf.type_definition, vim.tbl_extend("force", opts, { desc = "Type definition" }))
-          vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, vim.tbl_extend("force", opts, { desc = "Rename" }))
-          vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, vim.tbl_extend("force", opts, { desc = "Code action" }))
-          vim.keymap.set("n", "gr", vim.lsp.buf.references, vim.tbl_extend("force", opts, { desc = "References" }))
-          
-          -- Additional telescope LSP keymaps
-          local telescope_builtin = require("telescope.builtin")
-          vim.keymap.set("n", "<leader>gr", function()
-            telescope_builtin.lsp_references(require("telescope.themes").get_dropdown({
-              previewer = false,
-              layout_config = {
-                width = 0.8,
-                height = 0.4,
-              },
-            }))
-          end, vim.tbl_extend("force", opts, { desc = "Show references" }))
-          vim.keymap.set("n", "<leader>gd", vim.lsp.buf.definition, vim.tbl_extend("force", opts, { desc = "Go to definition" }))
-          vim.keymap.set("n", "<leader>gt", telescope_builtin.lsp_type_definitions, vim.tbl_extend("force", opts, { desc = "Telescope type definitions" }))
-          vim.keymap.set("n", "<leader>gi", telescope_builtin.lsp_implementations, vim.tbl_extend("force", opts, { desc = "Telescope implementations" }))
-          vim.keymap.set("n", "<leader>gc", telescope_builtin.lsp_incoming_calls, vim.tbl_extend("force", opts, { desc = "Telescope incoming calls" }))
-          vim.keymap.set("n", "<leader>go", telescope_builtin.lsp_outgoing_calls, vim.tbl_extend("force", opts, { desc = "Telescope outgoing calls" }))
-          vim.keymap.set("n", "<leader>lf", function()
-            vim.lsp.buf.format({ async = true })
-          end, vim.tbl_extend("force", opts, { desc = "Format buffer" }))
-        end,
-      })
+      -- Setup handlers and capabilities first
+      local capabilities = require("cmp_nvim_lsp").default_capabilities()
       
       -- Border for floating windows
       local border = {
@@ -115,6 +55,118 @@ return {
         ["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = border }),
         ["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = border }),
       }
+      
+      -- Ensure LSP servers are installed and setup with handlers
+      require("mason-lspconfig").setup({
+        ensure_installed = {
+          "clangd",      -- C/C++
+          "tsserver",    -- JavaScript/TypeScript
+          "pyright",     -- Python
+          "lua_ls",      -- Lua
+        },
+        automatic_installation = true,
+        handlers = {
+          -- Default handler for all servers
+          function(server_name)
+            -- Skip servers we'll configure manually below
+            if server_name == "clangd" or server_name == "tsserver" or server_name == "pyright" or server_name == "lua_ls" then
+              return
+            end
+            lspconfig[server_name].setup({
+              capabilities = capabilities,
+              handlers = handlers,
+            })
+          end,
+        },
+      })
+      
+      -- Global mappings
+      vim.keymap.set("n", "<leader>ld", vim.diagnostic.open_float, { desc = "Line diagnostics" })
+      vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "Previous diagnostic" })
+      vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "Next diagnostic" })
+      vim.keymap.set("n", "<leader>lq", vim.diagnostic.setloclist, { desc = "Diagnostic loclist" })
+      
+      -- Use LspAttach autocommand to only map after the language server attaches
+      vim.api.nvim_create_autocmd("LspAttach", {
+        group = vim.api.nvim_create_augroup("UserLspConfig", { clear = true }),
+        callback = function(ev)
+          -- Enable completion triggered by <c-x><c-o>
+          vim.bo[ev.buf].omnifunc = "v:lua.vim.lsp.omnifunc"
+          
+          -- Buffer local mappings
+          local opts = { buffer = ev.buf }
+          local telescope_builtin = require("telescope.builtin")
+          local telescope_themes = require("telescope.themes")
+          
+          -- Helper to create filtered telescope dropdown
+          local function lsp_dropdown(opts_override)
+            return vim.tbl_deep_extend("force", telescope_themes.get_dropdown({
+              previewer = false,
+              layout_config = {
+                width = 0.8,
+                height = 0.4,
+              },
+              initial_mode = "insert",
+              default_text = "",
+              -- Ensure no extra characters
+              prompt_prefix = " ",
+              selection_caret = "> ",
+            }), opts_override or {})
+          end
+          
+          -- gr* pattern for LSP navigation
+          vim.keymap.set("n", "grD", vim.lsp.buf.declaration, vim.tbl_extend("force", opts, { desc = "Go to declaration" }))
+          vim.keymap.set("n", "grd", function()
+            telescope_builtin.lsp_definitions(lsp_dropdown({
+              jump_type = "never",
+              fname_width = 60,
+            }))
+          end, vim.tbl_extend("force", opts, { desc = "Go to definition" }))
+          vim.keymap.set("n", "grr", function()
+            telescope_builtin.lsp_references(lsp_dropdown({
+              include_declaration = false,
+              include_current_line = false,
+              fname_width = 60,
+            }))
+          end, vim.tbl_extend("force", opts, { desc = "Show references" }))
+          vim.keymap.set("n", "gri", function()
+            telescope_builtin.lsp_implementations(lsp_dropdown({
+              jump_type = "never",
+              fname_width = 60,
+            }))
+          end, vim.tbl_extend("force", opts, { desc = "Go to implementation" }))
+          vim.keymap.set("n", "grt", function()
+            telescope_builtin.lsp_type_definitions(lsp_dropdown({
+              jump_type = "never",
+              fname_width = 60,
+            }))
+          end, vim.tbl_extend("force", opts, { desc = "Go to type definition" }))
+          vim.keymap.set("n", "grc", function()
+            telescope_builtin.lsp_incoming_calls(lsp_dropdown({
+              fname_width = 60,
+            }))
+          end, vim.tbl_extend("force", opts, { desc = "Incoming calls" }))
+          vim.keymap.set("n", "gro", function()
+            telescope_builtin.lsp_outgoing_calls(lsp_dropdown({
+              fname_width = 60,
+            }))
+          end, vim.tbl_extend("force", opts, { desc = "Outgoing calls" }))
+          
+          -- Other LSP keymaps
+          vim.keymap.set("n", "K", vim.lsp.buf.hover, vim.tbl_extend("force", opts, { desc = "Hover documentation" }))
+          vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, vim.tbl_extend("force", opts, { desc = "Signature help" }))
+          vim.keymap.set("n", "<leader>wa", vim.lsp.buf.add_workspace_folder, vim.tbl_extend("force", opts, { desc = "Add workspace folder" }))
+          vim.keymap.set("n", "<leader>wr", vim.lsp.buf.remove_workspace_folder, vim.tbl_extend("force", opts, { desc = "Remove workspace folder" }))
+          vim.keymap.set("n", "<leader>wl", function()
+            print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+          end, vim.tbl_extend("force", opts, { desc = "List workspace folders" }))
+          vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, vim.tbl_extend("force", opts, { desc = "Rename" }))
+          vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, vim.tbl_extend("force", opts, { desc = "Code action" }))
+          vim.keymap.set("n", "<leader>lf", function()
+            vim.lsp.buf.format({ async = true })
+          end, vim.tbl_extend("force", opts, { desc = "Format buffer" }))
+        end,
+      })
       
       -- Diagnostic config
       vim.diagnostic.config({
@@ -140,8 +192,6 @@ return {
       end
       
       -- Server configurations
-      local capabilities = require("cmp_nvim_lsp").default_capabilities()
-      
       -- C/C++ (clangd)
       lspconfig.clangd.setup({
         capabilities = capabilities,
