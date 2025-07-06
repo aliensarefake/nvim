@@ -10,13 +10,13 @@ require("lazy").setup("plugins", {
     missing = true,
     colorscheme = { "tokyonight" },
   },
-  
+
   -- Automatically check for plugin updates
   checker = {
     enabled = true,
     notify = false,
   },
-  
+
   -- Lazy-loading performance optimizations
   performance = {
     rtp = {
@@ -33,7 +33,7 @@ require("lazy").setup("plugins", {
       },
     },
   },
-  
+
   -- UI customization
   ui = {
     border = "rounded",
