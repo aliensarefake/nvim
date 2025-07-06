@@ -12,6 +12,9 @@ return {
       
       -- Additional LSP functionality
       "folke/neodev.nvim",
+      
+      -- Telescope for LSP navigation
+      "nvim-telescope/telescope.nvim",
     },
     config = function()
       -- Setup neodev for Neovim Lua development
@@ -72,6 +75,23 @@ return {
           vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, vim.tbl_extend("force", opts, { desc = "Rename" }))
           vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, vim.tbl_extend("force", opts, { desc = "Code action" }))
           vim.keymap.set("n", "gr", vim.lsp.buf.references, vim.tbl_extend("force", opts, { desc = "References" }))
+          
+          -- Additional telescope LSP keymaps
+          local telescope_builtin = require("telescope.builtin")
+          vim.keymap.set("n", "<leader>gr", function()
+            telescope_builtin.lsp_references(require("telescope.themes").get_dropdown({
+              previewer = false,
+              layout_config = {
+                width = 0.8,
+                height = 0.4,
+              },
+            }))
+          end, vim.tbl_extend("force", opts, { desc = "Show references" }))
+          vim.keymap.set("n", "<leader>gd", vim.lsp.buf.definition, vim.tbl_extend("force", opts, { desc = "Go to definition" }))
+          vim.keymap.set("n", "<leader>gt", telescope_builtin.lsp_type_definitions, vim.tbl_extend("force", opts, { desc = "Telescope type definitions" }))
+          vim.keymap.set("n", "<leader>gi", telescope_builtin.lsp_implementations, vim.tbl_extend("force", opts, { desc = "Telescope implementations" }))
+          vim.keymap.set("n", "<leader>gc", telescope_builtin.lsp_incoming_calls, vim.tbl_extend("force", opts, { desc = "Telescope incoming calls" }))
+          vim.keymap.set("n", "<leader>go", telescope_builtin.lsp_outgoing_calls, vim.tbl_extend("force", opts, { desc = "Telescope outgoing calls" }))
           vim.keymap.set("n", "<leader>lf", function()
             vim.lsp.buf.format({ async = true })
           end, vim.tbl_extend("force", opts, { desc = "Format buffer" }))

@@ -76,8 +76,10 @@ return {
       })
       
       -- Keymaps for buffer navigation
-      vim.keymap.set("n", "<Tab>", "<cmd>BufferLineCycleNext<cr>", { desc = "Next buffer" })
-      vim.keymap.set("n", "<S-Tab>", "<cmd>BufferLineCyclePrev<cr>", { desc = "Previous buffer" })
+      -- Using <leader>bn and <leader>bN instead of Tab to avoid conflicts with indentation
+      vim.keymap.set("n", "<leader>bn", "<cmd>BufferLineCycleNext<cr>", { desc = "Next buffer" })
+      vim.keymap.set("n", "<leader>bN", "<cmd>BufferLineCyclePrev<cr>", { desc = "Previous buffer" })
+      -- Alternative: Use Alt+l and Alt+h (or keep existing S-l and S-h from keymaps.lua)
       vim.keymap.set("n", "<leader>bp", "<cmd>BufferLineTogglePin<cr>", { desc = "Pin buffer" })
       vim.keymap.set("n", "<leader>bP", "<cmd>BufferLineGroupClose ungrouped<cr>", { desc = "Close unpinned buffers" })
     end,
