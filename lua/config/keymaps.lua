@@ -108,9 +108,9 @@ keymap("n", "<leader>dl", vim.diagnostic.setloclist, { desc = "Diagnostics to lo
 -- Tab/Shift-Tab for indent/unindent in all modes
 keymap("n", "<Tab>", ">>", { desc = "Indent line" })
 keymap("n", "<S-Tab>", "<<", { desc = "Unindent line" })
-keymap("v", "<Tab>", ">gv", { desc = "Indent selection" })
-keymap("v", "<S-Tab>", "<gv", { desc = "Unindent selection" })
-keymap("i", "<Tab>", "<C-d>", { desc = "Indent" })
+keymap("v", "<Tab>", ">gv", { desc = "Indent selection", silent = true })
+keymap("v", "<S-Tab>", "<gv", { desc = "Unindent selection", silent = true })
+keymap("i", "<Tab>", "<C-t>", { desc = "Indent" })
 keymap("i", "<S-Tab>", "<C-d>", { desc = "Unindent" })
 
 -- Multi-replace/delete keymaps
