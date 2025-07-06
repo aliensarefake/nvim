@@ -68,18 +68,17 @@ return {
       
       -- Optional, customize how names/IDs for new notes are created.
       note_id_func = function(title)
-        -- Create note IDs in a Zettelkasten format with a timestamp and a suffix.
-        local suffix = ""
         if title ~= nil then
           -- If title is given, transform it into valid file name.
-          suffix = title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
+          return title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
         else
-          -- If title is nil, just add 4 random uppercase letters to the suffix.
+          -- If title is nil, generate 4 random uppercase letters.
+          local suffix = ""
           for _ = 1, 4 do
             suffix = suffix .. string.char(math.random(65, 90))
           end
+          return suffix
         end
-        return tostring(os.time()) .. "-" .. suffix
       end,
       
       -- Optional, customize the default name or prefix when pasting images via `:ObsidianPasteImg`.
