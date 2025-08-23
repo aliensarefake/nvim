@@ -31,6 +31,12 @@ function M.setup()
   autocmd({ "CursorMoved", "CursorMovedI" }, {
     group = "ForceRedraw",
     callback = function()
+      -- Skip for markdown files to avoid breaking Obsidian rendering
+      local ft = vim.bo.filetype
+      if ft == 'markdown' or ft == 'md' then
+        return
+      end
+      
       local mode = vim.api.nvim_get_mode().mode
       if mode ~= 'v' and mode ~= 'V' and mode ~= '\x16' then
         local ok, _ = pcall(vim.api.nvim_buf_clear_namespace, 0, -1, 0, -1)
@@ -43,6 +49,12 @@ function M.setup()
   autocmd({ "InsertEnter", "CursorMoved" }, {
     group = "ClearSearchHighlight",
     callback = function()
+      -- Skip for markdown files
+      local ft = vim.bo.filetype
+      if ft == 'markdown' or ft == 'md' then
+        return
+      end
+      
       if vim.v.hlsearch == 1 and vim.fn.mode() == 'n' then
         local key = vim.api.nvim_replace_termcodes("<Cmd>nohlsearch<CR>", true, false, true)
         vim.api.nvim_feedkeys(key, 'n', false)
