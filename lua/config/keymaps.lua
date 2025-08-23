@@ -113,7 +113,7 @@ keymap("v", "<S-Tab>", "<gv", { desc = "Unindent selection", silent = true })
 keymap("i", "<Tab>", "<C-t>", { desc = "Indent" })
 keymap("i", "<S-Tab>", "<C-d>", { desc = "Unindent" })
 
--- Multi-replace/delete keymaps
+-- Multi-replace/delete keymaps (current buffer)
 keymap("n", "<leader>mr", function()
   local word = vim.fn.expand("<cword>")
   local input = vim.fn.input("Search pattern (default: " .. word .. "): ", word)
@@ -123,7 +123,7 @@ keymap("n", "<leader>mr", function()
   if replacement == nil then return end
 
   vim.cmd("%s/\\<" .. input .. "\\>/" .. replacement .. "/gc")
-end, { desc = "Replace word globally" })
+end, { desc = "Replace word in buffer" })
 
 keymap("n", "<leader>md", function()
   local word = vim.fn.expand("<cword>")
@@ -131,7 +131,20 @@ keymap("n", "<leader>md", function()
   if input == "" then return end
 
   vim.cmd("%s/\\<" .. input .. "\\>//gc")
-end, { desc = "Delete word globally" })
+end, { desc = "Delete word in buffer" })
+
+-- Multi-file search and replace
+keymap("n", "<leader>mR", function()
+  require("spectre").open()
+end, { desc = "Replace across files (Spectre)" })
+
+keymap("n", "<leader>mw", function()
+  require("spectre").open_visual({select_word=true})
+end, { desc = "Replace word across files" })
+
+keymap("v", "<leader>mR", function()
+  require("spectre").open_visual()
+end, { desc = "Replace selection across files" })
 
 -- Markdown formatting keymaps
 vim.api.nvim_create_autocmd("FileType", {

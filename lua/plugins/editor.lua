@@ -253,4 +253,180 @@ return {
       end
     end,
   },
+
+  -- Search and replace across multiple files
+  {
+    "nvim-pack/nvim-spectre",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    config = function()
+      require("spectre").setup({
+        color_devicons = true,
+        open_cmd = "vnew",
+        live_update = false,
+        line_sep_start = "┌─────────────────────────────────────────",
+        result_padding = "¦  ",
+        line_sep = "└─────────────────────────────────────────",
+        highlight = {
+          ui = "String",
+          search = "DiffChange",
+          replace = "DiffDelete"
+        },
+        mapping = {
+          ["toggle_line"] = {
+            map = "dd",
+            cmd = "<cmd>lua require('spectre').toggle_line()<CR>",
+            desc = "toggle current item"
+          },
+          ["enter_file"] = {
+            map = "<cr>",
+            cmd = "<cmd>lua require('spectre.actions').select_entry()<CR>",
+            desc = "goto current file"
+          },
+          ["send_to_qf"] = {
+            map = "<leader>q",
+            cmd = "<cmd>lua require('spectre.actions').send_to_qf()<CR>",
+            desc = "send all item to quickfix"
+          },
+          ["replace_cmd"] = {
+            map = "<leader>c",
+            cmd = "<cmd>lua require('spectre.actions').replace_cmd()<CR>",
+            desc = "input replace vim command"
+          },
+          ["show_option_menu"] = {
+            map = "<leader>o",
+            cmd = "<cmd>lua require('spectre').show_options()<CR>",
+            desc = "show option"
+          },
+          ["run_current_replace"] = {
+            map = "<leader>rc",
+            cmd = "<cmd>lua require('spectre.actions').run_current_replace()<CR>",
+            desc = "replace current line"
+          },
+          ["run_replace"] = {
+            map = "<leader>R",
+            cmd = "<cmd>lua require('spectre.actions').run_replace()<CR>",
+            desc = "replace all"
+          },
+          ["change_view_mode"] = {
+            map = "<leader>v",
+            cmd = "<cmd>lua require('spectre').change_view()<CR>",
+            desc = "change result view mode"
+          },
+          ["toggle_live_update"] = {
+            map = "tu",
+            cmd = "<cmd>lua require('spectre').toggle_live_update()<CR>",
+            desc = "update change when vim write file."
+          },
+          ["toggle_ignore_case"] = {
+            map = "ti",
+            cmd = "<cmd>lua require('spectre').change_options('ignore-case')<CR>",
+            desc = "toggle ignore case"
+          },
+          ["toggle_ignore_hidden"] = {
+            map = "th",
+            cmd = "<cmd>lua require('spectre').change_options('hidden')<CR>",
+            desc = "toggle search hidden"
+          },
+          ["resume_last_search"] = {
+            map = "<leader>l",
+            cmd = "<cmd>lua require('spectre').resume_last_search()<CR>",
+            desc = "resume last search before close"
+          },
+        },
+      })
+      
+      -- Keymaps
+      vim.keymap.set("n", "<leader>S", '<cmd>lua require("spectre").toggle()<CR>', { desc = "Toggle Spectre" })
+      vim.keymap.set("n", "<leader>sw", '<cmd>lua require("spectre").open_visual({select_word=true})<CR>', { desc = "Search current word" })
+      vim.keymap.set("v", "<leader>sw", '<esc><cmd>lua require("spectre").open_visual()<CR>', { desc = "Search current word" })
+      vim.keymap.set("n", "<leader>sp", '<cmd>lua require("spectre").open_file_search({select_word=true})<CR>', { desc = "Search in current file" })
+    end,
+  },
+
+  -- Git signs and blame
+  {
+    "lewis6991/gitsigns.nvim",
+    event = { "BufReadPre", "BufNewFile" },
+    config = function()
+      require("gitsigns").setup({
+        signs = {
+          add          = { text = "│" },
+          change       = { text = "│" },
+          delete       = { text = "_" },
+          topdelete    = { text = "‾" },
+          changedelete = { text = "~" },
+          untracked    = { text = "┆" },
+        },
+        signcolumn = true,
+        numhl = false,
+        linehl = false,
+        word_diff = false,
+        watch_gitdir = {
+          follow_files = true
+        },
+        auto_attach = true,
+        attach_to_untracked = false,
+        current_line_blame = false,
+        current_line_blame_opts = {
+          virt_text = true,
+          virt_text_pos = "eol",
+          delay = 1000,
+          ignore_whitespace = false,
+          virt_text_priority = 100,
+        },
+        current_line_blame_formatter = "<author>, <author_time:%Y-%m-%d> - <summary>",
+        sign_priority = 6,
+        update_debounce = 100,
+        status_formatter = nil,
+        max_file_length = 40000,
+        preview_config = {
+          border = "single",
+          style = "minimal",
+          relative = "cursor",
+          row = 0,
+          col = 1
+        },
+        on_attach = function(bufnr)
+          local gs = package.loaded.gitsigns
+
+          local function map(mode, l, r, opts)
+            opts = opts or {}
+            opts.buffer = bufnr
+            vim.keymap.set(mode, l, r, opts)
+          end
+
+          -- Navigation
+          map("n", "]c", function()
+            if vim.wo.diff then return "]c" end
+            vim.schedule(function() gs.next_hunk() end)
+            return "<Ignore>"
+          end, {expr=true, desc = "Next hunk"})
+
+          map("n", "[c", function()
+            if vim.wo.diff then return "[c" end
+            vim.schedule(function() gs.prev_hunk() end)
+            return "<Ignore>"
+          end, {expr=true, desc = "Previous hunk"})
+
+          -- Actions
+          map("n", "<leader>hs", gs.stage_hunk, { desc = "Stage hunk" })
+          map("n", "<leader>hr", gs.reset_hunk, { desc = "Reset hunk" })
+          map("v", "<leader>hs", function() gs.stage_hunk {vim.fn.line("."), vim.fn.line("v")} end, { desc = "Stage hunk" })
+          map("v", "<leader>hr", function() gs.reset_hunk {vim.fn.line("."), vim.fn.line("v")} end, { desc = "Reset hunk" })
+          map("n", "<leader>hS", gs.stage_buffer, { desc = "Stage buffer" })
+          map("n", "<leader>hu", gs.undo_stage_hunk, { desc = "Undo stage hunk" })
+          map("n", "<leader>hR", gs.reset_buffer, { desc = "Reset buffer" })
+          map("n", "<leader>hp", gs.preview_hunk, { desc = "Preview hunk" })
+          map("n", "<leader>hb", function() gs.blame_line{full=true} end, { desc = "Blame line" })
+          map("n", "<leader>tb", gs.toggle_current_line_blame, { desc = "Toggle blame line" })
+          map("n", "<leader>hd", gs.diffthis, { desc = "Diff this" })
+          map("n", "<leader>hD", function() gs.diffthis("~") end, { desc = "Diff this ~" })
+          map("n", "<leader>td", gs.toggle_deleted, { desc = "Toggle deleted" })
+
+          -- Text object
+          map({"o", "x"}, "ih", ":<C-U>Gitsigns select_hunk<CR>", { desc = "Select hunk" })
+        end
+      })
+    end,
+  },
 }

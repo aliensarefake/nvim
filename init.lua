@@ -30,3 +30,6 @@ require("config.options")
 require("config.keymaps")
 require("config.lazy")
 require("config.autocmds")
+
+-- Load highlight fix
+require("config.highlight-fix").setup()

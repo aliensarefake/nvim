@@ -60,16 +60,18 @@ return {
       require("mason-lspconfig").setup({
         ensure_installed = {
           "clangd",      -- C/C++
-          "tsserver",    -- JavaScript/TypeScript
+          "ts_ls",       -- JavaScript/TypeScript
           "pyright",     -- Python
           "lua_ls",      -- Lua
+          "jdtls",       -- Java
+          "solidity_ls_nomicfoundation", -- Solidity
         },
         automatic_installation = true,
         handlers = {
           -- Default handler for all servers
           function(server_name)
             -- Skip servers we'll configure manually below
-            if server_name == "clangd" or server_name == "tsserver" or server_name == "pyright" or server_name == "lua_ls" then
+            if server_name == "clangd" or server_name == "ts_ls" or server_name == "pyright" or server_name == "lua_ls" or server_name == "jdtls" or server_name == "solidity_ls_nomicfoundation" then
               return
             end
             lspconfig[server_name].setup({
@@ -213,7 +215,7 @@ return {
       })
       
       -- JavaScript/TypeScript
-      lspconfig.tsserver.setup({
+      lspconfig.ts_ls.setup({
         capabilities = capabilities,
         handlers = handlers,
         settings = {
@@ -282,6 +284,50 @@ return {
             },
           },
         },
+      })
+      
+      -- Java
+      lspconfig.jdtls.setup({
+        capabilities = capabilities,
+        handlers = handlers,
+        cmd = { "jdtls" },
+        root_dir = function(fname)
+          return lspconfig.util.root_pattern("pom.xml", "gradle.build", ".git", "mvnw", "gradlew")(fname) or vim.fn.getcwd()
+        end,
+        settings = {
+          java = {
+            signatureHelp = { enabled = true },
+            contentProvider = { preferred = "fernflower" },
+            completion = {
+              favoriteStaticMembers = {
+                "org.junit.jupiter.api.Assertions.*",
+                "org.junit.Assert.*",
+                "org.mockito.Mockito.*",
+              },
+            },
+            sources = {
+              organizeImports = {
+                starThreshold = 9999,
+                staticStarThreshold = 9999,
+              },
+            },
+            codeGeneration = {
+              toString = {
+                template = "${object.className}{${member.name()}=${member.value}, ${otherMembers}}",
+              },
+            },
+          },
+        },
+      })
+      
+      -- Solidity
+      lspconfig.solidity_ls_nomicfoundation.setup({
+        capabilities = capabilities,
+        handlers = handlers,
+        cmd = { "nomicfoundation-solidity-language-server", "--stdio" },
+        filetypes = { "solidity" },
+        root_dir = lspconfig.util.root_pattern("hardhat.config.js", "hardhat.config.ts", "foundry.toml", "truffle.js", "truffle-config.js", "package.json", ".git"),
+        single_file_support = true,
       })
     end,
   },

@@ -131,6 +131,15 @@ A modular, performance-optimized Neovim configuration with LSP support, advanced
 - `gc` (visual) - Comment selection
 - `gb` (visual) - Block comment selection
 
+### Search and Replace
+- `<leader>mr` - Replace word in current buffer
+- `<leader>md` - Delete word in current buffer
+- `<leader>mR` - Open Spectre for multi-file search/replace
+- `<leader>mw` - Replace current word across all files
+- `<leader>S` - Toggle Spectre window
+- `<leader>sw` - Search current word with Spectre
+- `<leader>sp` - Search in current file with Spectre
+
 ### Surround
 - `ys{motion}{char}` - Add surround
 - `ds{char}` - Delete surround
@@ -263,3 +272,62 @@ A modular, performance-optimized Neovim configuration with LSP support, advanced
 ### Telescope not finding files
 - Install ripgrep: `brew install ripgrep` (macOS)
 - Install fd (optional): `brew install fd`
+
+## 🔍 Search and Replace with nvim-spectre
+
+### Overview
+nvim-spectre provides powerful project-wide search and replace functionality with a visual interface.
+
+### Basic Workflow
+1. **Open Spectre**: `<leader>S` or `<leader>mR`
+2. **Enter search pattern**: Type what you want to find
+3. **Enter replacement**: Type what you want to replace it with
+4. **Review matches**: See all occurrences across files
+5. **Toggle/exclude items**: Use `dd` to exclude specific matches
+6. **Execute replace**: `<leader>R` to replace all
+
+### Spectre Key Bindings
+
+#### Opening Spectre
+- `<leader>S` - Open empty Spectre window
+- `<leader>mR` - Open Spectre for general search/replace
+- `<leader>mw` - Search/replace current word under cursor
+- `<leader>sw` - Search current word (normal mode)
+- `<leader>sp` - Search in current file only
+- Visual mode + `<leader>mR` - Search selected text
+
+#### Inside Spectre Window
+- `<leader>R` - Replace ALL occurrences
+- `<leader>rc` - Replace only current line
+- `dd` - Toggle individual item (include/exclude)
+- `<cr>` - Jump to file location
+- `ti` - Toggle ignore case
+- `th` - Toggle search hidden files
+- `<leader>q` - Send results to quickfix
+- `<leader>v` - Change view mode
+- `<leader>o` - Show options menu
+- `tu` - Toggle live update
+
+### Example Usage
+
+#### Rename a Variable Across Project
+1. Place cursor on variable name
+2. Press `<leader>mw`
+3. Type new variable name in replace field
+4. Review all occurrences
+5. Press `dd` to exclude any false positives
+6. Press `<leader>R` to execute replacement
+
+#### Search and Replace Custom Pattern
+1. Press `<leader>mR`
+2. Enter regex pattern (e.g., `console\.log.*`)
+3. Enter replacement (e.g., `// DEBUG:`)
+4. Toggle options with `ti` (ignore case) or `th` (hidden files)
+5. Review and execute with `<leader>R`
+
+### Tips
+- Use regex patterns for complex searches
+- The search uses ripgrep syntax
+- Changes are previewed before applying
+- Individual occurrences can be toggled on/off
+- Results can be sent to quickfix for navigation
