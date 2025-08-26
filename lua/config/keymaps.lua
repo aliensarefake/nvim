@@ -81,7 +81,7 @@ keymap("i", "<C-k>", "<Up>", opts)
 
 -- Ctrl+Backspace to delete word in insert mode (various terminal escape sequences)
 keymap("i", "<C-BS>", "<C-w>", opts)
-keymap("i", "<C-H>", "<C-w>", opts)
+-- Removed <C-H> mapping as it conflicts with normal mode switching
 keymap("i", "<M-BS>", "<C-w>", opts)
 
 -- Quick escape (commented out to avoid accidental triggers)
