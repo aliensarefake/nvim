@@ -122,7 +122,14 @@ return {
           find_files = {
             theme = "dropdown",
             previewer = false,
-            hidden = true,
+            hidden = false,
+            file_ignore_patterns = {
+              "^%.git/",
+              "^%.DS_Store$",
+              "^%.",
+              "node_modules/",
+              ".git/",
+            },
           },
           live_grep = {
             theme = "ivy",
