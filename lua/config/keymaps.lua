@@ -47,9 +47,11 @@ keymap("n", "<S-h>", ":bprevious<CR>", opts)
 keymap("n", "<leader>bd", ":bdelete<CR>", { desc = "Delete buffer" })
 keymap("n", "<leader>bc", ":bdelete!<CR>", { desc = "Force delete buffer" })
 
--- Stay in indent mode
+-- Stay in indent mode (use < and > keys directly, or Shift+, and Shift+.)
 keymap("v", "<", "<gv", opts)
 keymap("v", ">", ">gv", opts)
+keymap("v", "<S-,>", "<gv", opts)
+keymap("v", "<S-.>", ">gv", opts)
 
 -- Move text up and down
 keymap("v", "<A-j>", ":m .+1<CR>==", opts)
@@ -72,11 +74,15 @@ keymap("n", "<leader>qq", ":qa<CR>", { desc = "Quit all" })
 keymap("n", "<leader>qw", ":q<CR>", { desc = "Quit window" })
 keymap("n", "<leader>qf", ":q!<CR>", { desc = "Force quit" })
 
--- Better navigation in insert mode
-keymap("i", "<C-h>", "<Left>", opts)
+-- Better navigation in insert mode (removed C-h as it conflicts with backspace)
 keymap("i", "<C-l>", "<Right>", opts)
 keymap("i", "<C-j>", "<Down>", opts)
 keymap("i", "<C-k>", "<Up>", opts)
+
+-- Ctrl+Backspace to delete word in insert mode (various terminal escape sequences)
+keymap("i", "<C-BS>", "<C-w>", opts)
+keymap("i", "<C-H>", "<C-w>", opts)
+keymap("i", "<M-BS>", "<C-w>", opts)
 
 -- Quick escape (commented out to avoid accidental triggers)
 -- keymap("i", "jk", "<ESC>", opts)
