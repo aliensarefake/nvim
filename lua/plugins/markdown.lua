@@ -147,10 +147,10 @@ return {
             only_render_image_at_cursor = false,
           },
         },
-        max_width = nil,
-        max_height = nil,
-        max_width_window_percentage = nil,
-        max_height_window_percentage = 50,
+        max_width = 100,  -- Fixed width in columns
+        max_height = 20,  -- Fixed height in rows
+        max_width_window_percentage = 40,  -- Max 40% of window width
+        max_height_window_percentage = 30,  -- Max 30% of window height
         window_overlap_clear_enabled = false,
         window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
       })
