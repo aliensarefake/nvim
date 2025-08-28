@@ -108,7 +108,7 @@ return {
                 width = 0.8,
                 height = 0.4,
               },
-              initial_mode = "insert",
+              initial_mode = "normal",
               default_text = "",
               -- Ensure no extra characters
               prompt_prefix = " ",
