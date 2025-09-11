@@ -2,6 +2,59 @@
 -- File explorer, fuzzy finder, commenting, and surround
 
 return {
+  -- Formatter
+  {
+    "stevearc/conform.nvim",
+    event = { "BufWritePre" },
+    cmd = { "ConformInfo" },
+    opts = function()
+      local mason_bin = vim.fn.expand("~/.local/share/nvim/mason/bin/")
+      return {
+      formatters_by_ft = {
+        python = { "ruff" },
+        javascript = { "prettierd", "prettier", stop_after_first = true },
+        typescript = { "prettierd", "prettier", stop_after_first = true },
+        javascriptreact = { "prettierd", "prettier", stop_after_first = true },
+        typescriptreact = { "prettierd", "prettier", stop_after_first = true },
+        json = { "prettierd", "prettier", stop_after_first = true },
+        html = { "prettierd", "prettier", stop_after_first = true },
+        css = { "prettierd", "prettier", stop_after_first = true },
+        scss = { "prettierd", "prettier", stop_after_first = true },
+        markdown = { "prettierd", "prettier", stop_after_first = true },
+        lua = { "stylua" },
+        rust = { "rustfmt" },
+        c = { "clang-format" },
+        cpp = { "clang-format" },
+        java = { "google-java-format" },
+        solidity = { "prettier" },
+        ["_"] = { "trim_whitespace" },
+      },
+      format_on_save = {
+        timeout_ms = 500,
+        lsp_format = "fallback",
+      },
+      formatters = {
+        ruff = {
+          command = mason_bin .. "ruff",
+          args = { "format", "--stdin-filename", "$FILENAME", "-" },
+        },
+        black = {
+          command = mason_bin .. "black",
+          args = { "--stdin-filename", "$FILENAME", "--quiet", "-" },
+        },
+        prettierd = {
+          command = mason_bin .. "prettierd",
+        },
+        prettier = {
+          command = mason_bin .. "prettier",
+        },
+        stylua = {
+          command = mason_bin .. "stylua",
+        },
+      },
+    }
+    end,
+  },
   -- File explorer
   {
     "stevearc/oil.nvim",
