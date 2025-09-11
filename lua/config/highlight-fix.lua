@@ -39,7 +39,14 @@ function M.setup()
       
       local mode = vim.api.nvim_get_mode().mode
       if mode ~= 'v' and mode ~= 'V' and mode ~= '\x16' then
-        local ok, _ = pcall(vim.api.nvim_buf_clear_namespace, 0, -1, 0, -1)
+        -- Clear only non-diagnostic namespaces to preserve LSP diagnostics
+        local namespaces = vim.api.nvim_get_namespaces()
+        for name, ns_id in pairs(namespaces) do
+          -- Skip diagnostic namespaces (they typically contain "diagnostic" in the name)
+          if not string.match(name, "diagnostic") and not string.match(name, "vim.lsp") then
+            pcall(vim.api.nvim_buf_clear_namespace, 0, ns_id, 0, -1)
+          end
+        end
       end
     end,
   })

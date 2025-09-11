@@ -2,25 +2,11 @@
 -- Language Server Protocol support for C, JavaScript, TypeScript, Python, and C++
 
 return {
-  -- LSP Configuration
+  -- Mason MUST be loaded before mason-lspconfig
   {
-    "neovim/nvim-lspconfig",
-    dependencies = {
-      -- LSP installer
-      "williamboman/mason.nvim",
-      "williamboman/mason-lspconfig.nvim",
-      
-      -- Additional LSP functionality
-      "folke/neodev.nvim",
-      
-      -- Telescope for LSP navigation
-      "nvim-telescope/telescope.nvim",
-    },
+    "williamboman/mason.nvim",
+    priority = 100,
     config = function()
-      -- Setup neodev for Neovim Lua development
-      require("neodev").setup()
-      
-      -- Setup Mason
       require("mason").setup({
         ui = {
           border = "rounded",
@@ -31,6 +17,41 @@ return {
           },
         },
       })
+    end,
+  },
+  
+  -- Mason-lspconfig bridge
+  {
+    "williamboman/mason-lspconfig.nvim",
+    priority = 99,
+    dependencies = { "williamboman/mason.nvim" },
+    config = function()
+      require("mason-lspconfig").setup({
+        ensure_installed = {
+          "clangd",      -- C/C++
+          "ts_ls",       -- JavaScript/TypeScript
+          "pyright",     -- Python
+          "lua_ls",      -- Lua
+          "jdtls",       -- Java
+          "solidity_ls_nomicfoundation", -- Solidity
+        },
+        automatic_installation = true,
+      })
+    end,
+  },
+  
+  -- LSP Configuration
+  {
+    "neovim/nvim-lspconfig",
+    dependencies = {
+      "williamboman/mason.nvim",
+      "williamboman/mason-lspconfig.nvim",
+      "folke/neodev.nvim",
+      "nvim-telescope/telescope.nvim",
+    },
+    config = function()
+      -- Setup neodev for Neovim Lua development
+      require("neodev").setup()
       
       -- LSP settings
       local lspconfig = require("lspconfig")
@@ -56,31 +77,17 @@ return {
         ["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = border }),
       }
       
-      -- Ensure LSP servers are installed and setup with handlers
-      require("mason-lspconfig").setup({
-        ensure_installed = {
-          "clangd",      -- C/C++
-          "ts_ls",       -- JavaScript/TypeScript
-          "pyright",     -- Python
-          "lua_ls",      -- Lua
-          "jdtls",       -- Java
-          "solidity_ls_nomicfoundation", -- Solidity
-        },
-        automatic_installation = true,
-        handlers = {
-          -- Default handler for all servers
-          function(server_name)
-            -- Skip servers we'll configure manually below
-            if server_name == "clangd" or server_name == "ts_ls" or server_name == "pyright" or server_name == "lua_ls" or server_name == "jdtls" or server_name == "solidity_ls_nomicfoundation" then
-              return
-            end
-            lspconfig[server_name].setup({
-              capabilities = capabilities,
-              handlers = handlers,
-            })
-          end,
-        },
-      })
+      -- Setup automatic server configuration
+      local servers = require("mason-lspconfig").get_installed_servers()
+      for _, server_name in ipairs(servers) do
+        -- Skip servers we'll configure manually below
+        if server_name ~= "clangd" and server_name ~= "ts_ls" and server_name ~= "pyright" and server_name ~= "lua_ls" and server_name ~= "jdtls" and server_name ~= "solidity_ls_nomicfoundation" then
+          lspconfig[server_name].setup({
+            capabilities = capabilities,
+            handlers = handlers,
+          })
+        end
+      end
       
       -- Global mappings
       vim.keymap.set("n", "<leader>ld", vim.diagnostic.open_float, { desc = "Line diagnostics" })
@@ -175,23 +182,30 @@ return {
         virtual_text = {
           prefix = "●",
           source = "if_many",
+          spacing = 4,
+          update_in_insert = false,
         },
         float = {
           border = border,
           source = "always",
+          focusable = false,
+          header = "",
+          prefix = "",
         },
-        signs = true,
+        signs = {
+          text = {
+            [vim.diagnostic.severity.ERROR] = " ",
+            [vim.diagnostic.severity.WARN] = " ",
+            [vim.diagnostic.severity.HINT] = "󰠠 ",
+            [vim.diagnostic.severity.INFO] = " ",
+          },
+          priority = 7,
+        },
         underline = true,
         update_in_insert = false,
         severity_sort = true,
       })
       
-      -- Signs
-      local signs = { Error = " ", Warn = " ", Hint = "󰠠 ", Info = " " }
-      for type, icon in pairs(signs) do
-        local hl = "DiagnosticSign" .. type
-        vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
-      end
       
       -- Server configurations
       -- C/C++ (clangd)

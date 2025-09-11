@@ -52,7 +52,7 @@ opt.completeopt = "menuone,noselect,noinsert"  -- Better completion experience
 opt.shortmess:append("c")    -- Don't show completion messages
 
 -- Timing
-opt.updatetime = 250         -- Faster completion and diagnostics
+opt.updatetime = 300         -- Balanced update time for diagnostics
 opt.timeoutlen = 500         -- Time to wait for mapped sequence
 
 -- Folding (for nvim-ufo)
