@@ -65,7 +65,7 @@ opt.foldenable = true -- Enable folding
 opt.clipboard = "unnamedplus" -- Use system clipboard
 opt.mouse = "a" -- Enable mouse support
 opt.cmdheight = 1 -- Command line height
-opt.conceallevel = 2 -- Show concealed text
+opt.conceallevel = 0 -- Show concealed text
 opt.laststatus = 3 -- Global statusline
 opt.fillchars = { eob = " " } -- Remove ~ from empty lines
 opt.formatoptions:remove({ "c", "r", "o" }) -- Don't auto-continue comments
