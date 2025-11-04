@@ -73,156 +73,75 @@ return {
         ["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = border }),
       }
 
-      -- Setup servers with mason-lspconfig
-      require("mason-lspconfig").setup_handlers({
-        -- Default handler for all servers
-        function(server_name)
-          -- Skip ruff to avoid conflicts with pyright
-          if server_name == "ruff" or server_name == "ruff_lsp" then
-            return
-          end
-
-          lspconfig[server_name].setup({
-            capabilities = capabilities,
-            handlers = handlers,
-          })
-        end,
-
-        -- Custom configurations for specific servers
-        ["pyright"] = function()
-          lspconfig.pyright.setup({
-            capabilities = capabilities,
-            handlers = handlers,
-            settings = {
-              python = {
-                analysis = {
-                  autoSearchPaths = true,
-                  diagnosticMode = "workspace",
-                  useLibraryCodeForTypes = true,
-                  typeCheckingMode = "basic",
-                },
-              },
-            },
-          })
-        end,
-
-        ["lua_ls"] = function()
-          lspconfig.lua_ls.setup({
-            capabilities = capabilities,
-            handlers = handlers,
-            settings = {
-              Lua = {
-                runtime = { version = "LuaJIT" },
-                diagnostics = { globals = { "vim" } },
-                workspace = {
-                  library = vim.api.nvim_get_runtime_file("", true),
-                  checkThirdParty = false,
-                },
-                telemetry = { enable = false },
-                format = { enable = false },
-              },
-            },
-          })
-        end,
-
-        ["clangd"] = function()
-          lspconfig.clangd.setup({
-            capabilities = capabilities,
-            handlers = handlers,
-            cmd = {
-              "clangd",
-              "--background-index",
-              "--clang-tidy",
-              "--header-insertion=iwyu",
-              "--completion-style=detailed",
-              "--function-arg-placeholders",
-              "--fallback-style=llvm",
-            },
-            init_options = {
-              usePlaceholders = true,
-              completeUnimported = true,
-              clangdFileStatus = true,
-            },
-          })
-        end,
-
-        ["ts_ls"] = function()
-          lspconfig.ts_ls.setup({
-            capabilities = capabilities,
-            handlers = handlers,
-            settings = {
-              typescript = {
-                inlayHints = {
-                  includeInlayParameterNameHints = "all",
-                  includeInlayParameterNameHintsWhenArgumentMatchesName = false,
-                  includeInlayFunctionParameterTypeHints = true,
-                  includeInlayVariableTypeHints = true,
-                  includeInlayPropertyDeclarationTypeHints = true,
-                  includeInlayFunctionLikeReturnTypeHints = true,
-                  includeInlayEnumMemberValueHints = true,
-                },
-              },
-              javascript = {
-                inlayHints = {
-                  includeInlayParameterNameHints = "all",
-                  includeInlayParameterNameHintsWhenArgumentMatchesName = false,
-                  includeInlayFunctionParameterTypeHints = true,
-                  includeInlayVariableTypeHints = true,
-                  includeInlayPropertyDeclarationTypeHints = true,
-                  includeInlayFunctionLikeReturnTypeHints = true,
-                  includeInlayEnumMemberValueHints = true,
-                },
-              },
-            },
-          })
-        end,
-
-        ["jdtls"] = function()
-          lspconfig.jdtls.setup({
-            capabilities = capabilities,
-            handlers = handlers,
-            cmd = { "jdtls" },
-            root_dir = function(fname)
-              return lspconfig.util.root_pattern("pom.xml", "gradle.build", ".git", "mvnw", "gradlew")(fname) or vim.fn.getcwd()
-            end,
-            settings = {
-              java = {
-                signatureHelp = { enabled = true },
-                contentProvider = { preferred = "fernflower" },
-                completion = {
-                  favoriteStaticMembers = {
-                    "org.junit.jupiter.api.Assertions.*",
-                    "org.junit.Assert.*",
-                    "org.mockito.Mockito.*",
-                  },
-                },
-                sources = {
-                  organizeImports = {
-                    starThreshold = 9999,
-                    staticStarThreshold = 9999,
-                  },
-                },
-                codeGeneration = {
-                  toString = {
-                    template = "${object.className}{${member.name()}=${member.value}, ${otherMembers}}",
-                  },
-                },
-              },
-            },
-          })
-        end,
-
-        ["solidity_ls_nomicfoundation"] = function()
-          lspconfig.solidity_ls_nomicfoundation.setup({
-            capabilities = capabilities,
-            handlers = handlers,
-            cmd = { "nomicfoundation-solidity-language-server", "--stdio" },
-            filetypes = { "solidity" },
-            root_dir = lspconfig.util.root_pattern("hardhat.config.js", "hardhat.config.ts", "foundry.toml", "truffle.js", "truffle-config.js", "package.json", ".git"),
-            single_file_support = true,
-          })
-        end,
+      -- Setup servers manually (compatible with older mason-lspconfig)
+      -- C/C++
+      lspconfig.clangd.setup({
+        capabilities = capabilities,
+        handlers = handlers,
+        cmd = {
+          "clangd",
+          "--background-index",
+          "--clang-tidy",
+          "--header-insertion=iwyu",
+          "--completion-style=detailed",
+          "--function-arg-placeholders",
+          "--fallback-style=llvm",
+        },
+        init_options = {
+          usePlaceholders = true,
+          completeUnimported = true,
+          clangdFileStatus = true,
+        },
       })
+
+      -- JavaScript/TypeScript
+      lspconfig.ts_ls.setup({
+        capabilities = capabilities,
+        handlers = handlers,
+      })
+
+      -- Python - Let nvim-lspconfig handle it automatically
+      -- Don't set up pyright here to avoid duplicates
+
+      -- Lua
+      lspconfig.lua_ls.setup({
+        capabilities = capabilities,
+        handlers = handlers,
+        settings = {
+          Lua = {
+            runtime = { version = "LuaJIT" },
+            diagnostics = { globals = { "vim" } },
+            workspace = {
+              library = vim.api.nvim_get_runtime_file("", true),
+              checkThirdParty = false,
+            },
+            telemetry = { enable = false },
+            format = { enable = false },
+          },
+        },
+      })
+
+      -- Java
+      lspconfig.jdtls.setup({
+        capabilities = capabilities,
+        handlers = handlers,
+      })
+
+      -- Solidity
+      lspconfig.solidity_ls_nomicfoundation.setup({
+        capabilities = capabilities,
+        handlers = handlers,
+      })
+
+      -- Other servers
+      local other_servers = { "move_analyzer", "rust_analyzer" }
+      for _, server in ipairs(other_servers) do
+        lspconfig[server].setup({
+          capabilities = capabilities,
+          handlers = handlers,
+        })
+      end
+
 
       -- Global mappings
       vim.keymap.set("n", "<leader>ld", vim.diagnostic.open_float, { desc = "Line diagnostics" })
