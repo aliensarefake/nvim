@@ -35,7 +35,8 @@ return {
           "jdtls",       -- Java
           "solidity_ls_nomicfoundation", -- Solidity
         },
-        automatic_installation = true,
+        automatic_installation = false,  -- Disable automatic setup to prevent duplicates
+        -- We'll manually configure each server below
       })
     end,
   },
@@ -77,15 +78,42 @@ return {
         ["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = border }),
       }
       
-      -- Setup automatic server configuration
+      -- Setup automatic server configuration for servers WITHOUT custom config
+      -- Servers with custom config are handled below
+      local servers_with_custom_config = {
+        "clangd",
+        "ts_ls",
+        "pyright",
+        "lua_ls",
+        "jdtls",
+        "solidity_ls_nomicfoundation",
+        "ruff",  -- Exclude ruff to prevent conflicts with pyright
+        "ruff_lsp",  -- Also exclude ruff_lsp variant
+      }
+
+      -- List of servers to completely skip (not set up at all)
+      local servers_to_skip = {
+        "ruff",  -- Skip ruff as we're using pyright for Python
+        "ruff_lsp",  -- Skip ruff_lsp variant
+        "stylua",  -- This is a formatter, not an LSP
+        "solidity",  -- Skip in favor of solidity_ls_nomicfoundation
+      }
+
+      -- Track which servers we've already set up to prevent duplicates
+      local servers_already_setup = {}
+
       local servers = require("mason-lspconfig").get_installed_servers()
       for _, server_name in ipairs(servers) do
-        -- Skip servers we'll configure manually below
-        if server_name ~= "clangd" and server_name ~= "ts_ls" and server_name ~= "pyright" and server_name ~= "lua_ls" and server_name ~= "jdtls" and server_name ~= "solidity_ls_nomicfoundation" then
+        -- Skip servers that should not be configured at all
+        if vim.tbl_contains(servers_to_skip, server_name) then
+          -- Do nothing, skip this server entirely
+        -- Only setup servers that don't have custom configuration and haven't been set up yet
+        elseif not vim.tbl_contains(servers_with_custom_config, server_name) and not servers_already_setup[server_name] then
           lspconfig[server_name].setup({
             capabilities = capabilities,
             handlers = handlers,
           })
+          servers_already_setup[server_name] = true
         end
       end
       
@@ -107,21 +135,65 @@ return {
           local telescope_builtin = require("telescope.builtin")
           local telescope_themes = require("telescope.themes")
           
-          -- Helper to create filtered telescope dropdown
+          -- Helper to create filtered telescope with horizontal layout (files left, preview right)
           local function lsp_dropdown(opts_override)
-            return vim.tbl_deep_extend("force", telescope_themes.get_dropdown({
-              previewer = false,
+            return vim.tbl_deep_extend("force", {
+              layout_strategy = "horizontal",
               layout_config = {
-                width = 0.8,
-                height = 0.4,
+                horizontal = {
+                  preview_width = 0.65,  -- Preview takes 65% of width
+                  results_width = 0.35,  -- File list takes 35% of width
+                  width = 0.95,          -- Use 95% of screen width
+                  height = 0.85,         -- Use 85% of screen height
+                  preview_cutoff = 0,    -- Always show preview
+                },
               },
+              sorting_strategy = "ascending",  -- Results at top
               initial_mode = "normal",
               default_text = "",
-              -- Ensure no extra characters
               prompt_prefix = " ",
               selection_caret = "> ",
-            }), opts_override or {})
+              -- Border characters for better visibility
+              borderchars = {
+                "─", "│", "─", "│", "╭", "╮", "╯", "╰",
+              },
+            }, opts_override or {})
           end
+
+          -- Alternative: Vertical split with preview on bottom (uncomment to try)
+          -- local function lsp_dropdown(opts_override)
+          --   return vim.tbl_deep_extend("force", {
+          --     layout_strategy = "vertical",
+          --     layout_config = {
+          --       vertical = {
+          --         preview_height = 0.6,  -- Preview takes 60% of height
+          --         results_height = 0.4,  -- File list takes 40% of height
+          --         width = 0.9,
+          --         height = 0.9,
+          --         preview_cutoff = 0,
+          --       },
+          --     },
+          --     initial_mode = "normal",
+          --   }, opts_override or {})
+          -- end
+
+          -- Alternative: Flex layout that switches based on window size (uncomment to try)
+          -- local function lsp_dropdown(opts_override)
+          --   return vim.tbl_deep_extend("force", {
+          --     layout_strategy = "flex",
+          --     layout_config = {
+          --       horizontal = {
+          --         preview_width = 0.65,
+          --       },
+          --       vertical = {
+          --         preview_height = 0.6,
+          --       },
+          --       width = 0.9,
+          --       height = 0.85,
+          --     },
+          --     initial_mode = "normal",
+          --   }, opts_override or {})
+          -- end
           
           -- gr* pattern for LSP navigation
           vim.keymap.set("n", "grD", vim.lsp.buf.declaration, vim.tbl_extend("force", opts, { desc = "Go to declaration" }))
@@ -129,6 +201,8 @@ return {
             telescope_builtin.lsp_definitions(lsp_dropdown({
               jump_type = "never",
               fname_width = 60,
+              show_line = true,
+              trim_text = true,
             }))
           end, vim.tbl_extend("force", opts, { desc = "Go to definition" }))
           vim.keymap.set("n", "grr", function()
@@ -136,6 +210,8 @@ return {
               include_declaration = false,
               include_current_line = false,
               fname_width = 60,
+              show_line = true,
+              trim_text = true,
             }))
           end, vim.tbl_extend("force", opts, { desc = "Show references" }))
           vim.keymap.set("n", "gri", function()
@@ -258,21 +334,24 @@ return {
         },
       })
       
-      -- Python
-      lspconfig.pyright.setup({
-        capabilities = capabilities,
-        handlers = handlers,
-        settings = {
-          python = {
-            analysis = {
-              autoSearchPaths = true,
-              diagnosticMode = "workspace",
-              useLibraryCodeForTypes = true,
-              typeCheckingMode = "basic",
+      -- Python (only pyright, not ruff to avoid duplicates)
+      if not servers_already_setup["pyright"] then
+        lspconfig.pyright.setup({
+          capabilities = capabilities,
+          handlers = handlers,
+          settings = {
+            python = {
+              analysis = {
+                autoSearchPaths = true,
+                diagnosticMode = "workspace",
+                useLibraryCodeForTypes = true,
+                typeCheckingMode = "basic",
+              },
             },
           },
-        },
-      })
+        })
+        servers_already_setup["pyright"] = true
+      end
       
       -- Lua
       lspconfig.lua_ls.setup({

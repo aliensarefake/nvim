@@ -56,6 +56,9 @@ augroup("AutoCreateDir", { clear = true })
 autocmd("BufWritePre", {
   group = "AutoCreateDir",
   callback = function(event)
+    if event.match:match("^%w+://") then
+      return
+    end
     local file = vim.loop.fs_realpath(event.match) or event.match
     local dir = vim.fn.fnamemodify(file, ":p:h")
     if not vim.loop.fs_stat(dir) then
