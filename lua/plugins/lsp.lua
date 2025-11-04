@@ -1,11 +1,10 @@
 -- LSP Configuration
--- Language Server Protocol support for C, JavaScript, TypeScript, Python, and C++
+-- Clean and simple setup for Language Server Protocol support
 
 return {
-  -- Mason MUST be loaded before mason-lspconfig
+  -- Mason: LSP installer
   {
     "williamboman/mason.nvim",
-    priority = 100,
     config = function()
       require("mason").setup({
         ui = {
@@ -19,11 +18,10 @@ return {
       })
     end,
   },
-  
-  -- Mason-lspconfig bridge
+
+  -- Mason-lspconfig: Bridge between Mason and lspconfig
   {
     "williamboman/mason-lspconfig.nvim",
-    priority = 99,
     dependencies = { "williamboman/mason.nvim" },
     config = function()
       require("mason-lspconfig").setup({
@@ -35,12 +33,11 @@ return {
           "jdtls",       -- Java
           "solidity_ls_nomicfoundation", -- Solidity
         },
-        automatic_installation = false,  -- Disable automatic setup to prevent duplicates
-        -- We'll manually configure each server below
+        automatic_installation = true,
       })
     end,
   },
-  
+
   -- LSP Configuration
   {
     "neovim/nvim-lspconfig",
@@ -53,13 +50,11 @@ return {
     config = function()
       -- Setup neodev for Neovim Lua development
       require("neodev").setup()
-      
+
       -- LSP settings
       local lspconfig = require("lspconfig")
-      
-      -- Setup handlers and capabilities first
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
-      
+
       -- Border for floating windows
       local border = {
         { "┌", "FloatBorder" },
@@ -71,70 +66,181 @@ return {
         { "└", "FloatBorder" },
         { "│", "FloatBorder" },
       }
-      
-      -- LSP handlers
+
+      -- LSP handlers with borders
       local handlers = {
         ["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = border }),
         ["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = border }),
       }
-      
-      -- Setup automatic server configuration for servers WITHOUT custom config
-      -- Servers with custom config are handled below
-      local servers_with_custom_config = {
-        "clangd",
-        "ts_ls",
-        "pyright",
-        "lua_ls",
-        "jdtls",
-        "solidity_ls_nomicfoundation",
-        "ruff",  -- Exclude ruff to prevent conflicts with pyright
-        "ruff_lsp",  -- Also exclude ruff_lsp variant
-      }
 
-      -- List of servers to completely skip (not set up at all)
-      local servers_to_skip = {
-        "ruff",  -- Skip ruff as we're using pyright for Python
-        "ruff_lsp",  -- Skip ruff_lsp variant
-        "stylua",  -- This is a formatter, not an LSP
-        "solidity",  -- Skip in favor of solidity_ls_nomicfoundation
-      }
+      -- Setup servers with mason-lspconfig
+      require("mason-lspconfig").setup_handlers({
+        -- Default handler for all servers
+        function(server_name)
+          -- Skip ruff to avoid conflicts with pyright
+          if server_name == "ruff" or server_name == "ruff_lsp" then
+            return
+          end
 
-      -- Track which servers we've already set up to prevent duplicates
-      local servers_already_setup = {}
-
-      local servers = require("mason-lspconfig").get_installed_servers()
-      for _, server_name in ipairs(servers) do
-        -- Skip servers that should not be configured at all
-        if vim.tbl_contains(servers_to_skip, server_name) then
-          -- Do nothing, skip this server entirely
-        -- Only setup servers that don't have custom configuration and haven't been set up yet
-        elseif not vim.tbl_contains(servers_with_custom_config, server_name) and not servers_already_setup[server_name] then
           lspconfig[server_name].setup({
             capabilities = capabilities,
             handlers = handlers,
           })
-          servers_already_setup[server_name] = true
-        end
-      end
-      
+        end,
+
+        -- Custom configurations for specific servers
+        ["pyright"] = function()
+          lspconfig.pyright.setup({
+            capabilities = capabilities,
+            handlers = handlers,
+            settings = {
+              python = {
+                analysis = {
+                  autoSearchPaths = true,
+                  diagnosticMode = "workspace",
+                  useLibraryCodeForTypes = true,
+                  typeCheckingMode = "basic",
+                },
+              },
+            },
+          })
+        end,
+
+        ["lua_ls"] = function()
+          lspconfig.lua_ls.setup({
+            capabilities = capabilities,
+            handlers = handlers,
+            settings = {
+              Lua = {
+                runtime = { version = "LuaJIT" },
+                diagnostics = { globals = { "vim" } },
+                workspace = {
+                  library = vim.api.nvim_get_runtime_file("", true),
+                  checkThirdParty = false,
+                },
+                telemetry = { enable = false },
+                format = { enable = false },
+              },
+            },
+          })
+        end,
+
+        ["clangd"] = function()
+          lspconfig.clangd.setup({
+            capabilities = capabilities,
+            handlers = handlers,
+            cmd = {
+              "clangd",
+              "--background-index",
+              "--clang-tidy",
+              "--header-insertion=iwyu",
+              "--completion-style=detailed",
+              "--function-arg-placeholders",
+              "--fallback-style=llvm",
+            },
+            init_options = {
+              usePlaceholders = true,
+              completeUnimported = true,
+              clangdFileStatus = true,
+            },
+          })
+        end,
+
+        ["ts_ls"] = function()
+          lspconfig.ts_ls.setup({
+            capabilities = capabilities,
+            handlers = handlers,
+            settings = {
+              typescript = {
+                inlayHints = {
+                  includeInlayParameterNameHints = "all",
+                  includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+                  includeInlayFunctionParameterTypeHints = true,
+                  includeInlayVariableTypeHints = true,
+                  includeInlayPropertyDeclarationTypeHints = true,
+                  includeInlayFunctionLikeReturnTypeHints = true,
+                  includeInlayEnumMemberValueHints = true,
+                },
+              },
+              javascript = {
+                inlayHints = {
+                  includeInlayParameterNameHints = "all",
+                  includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+                  includeInlayFunctionParameterTypeHints = true,
+                  includeInlayVariableTypeHints = true,
+                  includeInlayPropertyDeclarationTypeHints = true,
+                  includeInlayFunctionLikeReturnTypeHints = true,
+                  includeInlayEnumMemberValueHints = true,
+                },
+              },
+            },
+          })
+        end,
+
+        ["jdtls"] = function()
+          lspconfig.jdtls.setup({
+            capabilities = capabilities,
+            handlers = handlers,
+            cmd = { "jdtls" },
+            root_dir = function(fname)
+              return lspconfig.util.root_pattern("pom.xml", "gradle.build", ".git", "mvnw", "gradlew")(fname) or vim.fn.getcwd()
+            end,
+            settings = {
+              java = {
+                signatureHelp = { enabled = true },
+                contentProvider = { preferred = "fernflower" },
+                completion = {
+                  favoriteStaticMembers = {
+                    "org.junit.jupiter.api.Assertions.*",
+                    "org.junit.Assert.*",
+                    "org.mockito.Mockito.*",
+                  },
+                },
+                sources = {
+                  organizeImports = {
+                    starThreshold = 9999,
+                    staticStarThreshold = 9999,
+                  },
+                },
+                codeGeneration = {
+                  toString = {
+                    template = "${object.className}{${member.name()}=${member.value}, ${otherMembers}}",
+                  },
+                },
+              },
+            },
+          })
+        end,
+
+        ["solidity_ls_nomicfoundation"] = function()
+          lspconfig.solidity_ls_nomicfoundation.setup({
+            capabilities = capabilities,
+            handlers = handlers,
+            cmd = { "nomicfoundation-solidity-language-server", "--stdio" },
+            filetypes = { "solidity" },
+            root_dir = lspconfig.util.root_pattern("hardhat.config.js", "hardhat.config.ts", "foundry.toml", "truffle.js", "truffle-config.js", "package.json", ".git"),
+            single_file_support = true,
+          })
+        end,
+      })
+
       -- Global mappings
       vim.keymap.set("n", "<leader>ld", vim.diagnostic.open_float, { desc = "Line diagnostics" })
       vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "Previous diagnostic" })
       vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "Next diagnostic" })
       vim.keymap.set("n", "<leader>lq", vim.diagnostic.setloclist, { desc = "Diagnostic loclist" })
-      
+
       -- Use LspAttach autocommand to only map after the language server attaches
       vim.api.nvim_create_autocmd("LspAttach", {
         group = vim.api.nvim_create_augroup("UserLspConfig", { clear = true }),
         callback = function(ev)
           -- Enable completion triggered by <c-x><c-o>
           vim.bo[ev.buf].omnifunc = "v:lua.vim.lsp.omnifunc"
-          
+
           -- Buffer local mappings
           local opts = { buffer = ev.buf }
           local telescope_builtin = require("telescope.builtin")
-          local telescope_themes = require("telescope.themes")
-          
+
           -- Helper to create filtered telescope with horizontal layout (files left, preview right)
           local function lsp_dropdown(opts_override)
             return vim.tbl_deep_extend("force", {
@@ -150,7 +256,6 @@ return {
               },
               sorting_strategy = "ascending",  -- Results at top
               initial_mode = "normal",
-              default_text = "",
               prompt_prefix = " ",
               selection_caret = "> ",
               -- Border characters for better visibility
@@ -160,42 +265,7 @@ return {
             }, opts_override or {})
           end
 
-          -- Alternative: Vertical split with preview on bottom (uncomment to try)
-          -- local function lsp_dropdown(opts_override)
-          --   return vim.tbl_deep_extend("force", {
-          --     layout_strategy = "vertical",
-          --     layout_config = {
-          --       vertical = {
-          --         preview_height = 0.6,  -- Preview takes 60% of height
-          --         results_height = 0.4,  -- File list takes 40% of height
-          --         width = 0.9,
-          --         height = 0.9,
-          --         preview_cutoff = 0,
-          --       },
-          --     },
-          --     initial_mode = "normal",
-          --   }, opts_override or {})
-          -- end
-
-          -- Alternative: Flex layout that switches based on window size (uncomment to try)
-          -- local function lsp_dropdown(opts_override)
-          --   return vim.tbl_deep_extend("force", {
-          --     layout_strategy = "flex",
-          --     layout_config = {
-          --       horizontal = {
-          --         preview_width = 0.65,
-          --       },
-          --       vertical = {
-          --         preview_height = 0.6,
-          --       },
-          --       width = 0.9,
-          --       height = 0.85,
-          --     },
-          --     initial_mode = "normal",
-          --   }, opts_override or {})
-          -- end
-          
-          -- gr* pattern for LSP navigation
+          -- gr* pattern for LSP navigation with Telescope
           vim.keymap.set("n", "grD", vim.lsp.buf.declaration, vim.tbl_extend("force", opts, { desc = "Go to declaration" }))
           vim.keymap.set("n", "grd", function()
             telescope_builtin.lsp_definitions(lsp_dropdown({
@@ -236,10 +306,9 @@ return {
               fname_width = 60,
             }))
           end, vim.tbl_extend("force", opts, { desc = "Outgoing calls" }))
-          
+
           -- Other LSP keymaps
           vim.keymap.set("n", "K", vim.lsp.buf.hover, vim.tbl_extend("force", opts, { desc = "Hover documentation" }))
-          -- vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, vim.tbl_extend("force", opts, { desc = "Signature help" }))
           vim.keymap.set("n", "<leader>wa", vim.lsp.buf.add_workspace_folder, vim.tbl_extend("force", opts, { desc = "Add workspace folder" }))
           vim.keymap.set("n", "<leader>wr", vim.lsp.buf.remove_workspace_folder, vim.tbl_extend("force", opts, { desc = "Remove workspace folder" }))
           vim.keymap.set("n", "<leader>wl", function()
@@ -252,7 +321,7 @@ return {
           end, vim.tbl_extend("force", opts, { desc = "Format buffer" }))
         end,
       })
-      
+
       -- Diagnostic config
       vim.diagnostic.config({
         virtual_text = {
@@ -275,152 +344,10 @@ return {
             [vim.diagnostic.severity.HINT] = "󰠠 ",
             [vim.diagnostic.severity.INFO] = " ",
           },
-          priority = 7,
         },
         underline = true,
         update_in_insert = false,
         severity_sort = true,
-      })
-      
-      
-      -- Server configurations
-      -- C/C++ (clangd)
-      lspconfig.clangd.setup({
-        capabilities = capabilities,
-        handlers = handlers,
-        cmd = {
-          "clangd",
-          "--background-index",
-          "--clang-tidy",
-          "--header-insertion=iwyu",
-          "--completion-style=detailed",
-          "--function-arg-placeholders",
-          "--fallback-style=llvm",
-        },
-        init_options = {
-          usePlaceholders = true,
-          completeUnimported = true,
-          clangdFileStatus = true,
-        },
-      })
-      
-      -- JavaScript/TypeScript
-      lspconfig.ts_ls.setup({
-        capabilities = capabilities,
-        handlers = handlers,
-        settings = {
-          typescript = {
-            inlayHints = {
-              includeInlayParameterNameHints = "all",
-              includeInlayParameterNameHintsWhenArgumentMatchesName = false,
-              includeInlayFunctionParameterTypeHints = true,
-              includeInlayVariableTypeHints = true,
-              includeInlayPropertyDeclarationTypeHints = true,
-              includeInlayFunctionLikeReturnTypeHints = true,
-              includeInlayEnumMemberValueHints = true,
-            },
-          },
-          javascript = {
-            inlayHints = {
-              includeInlayParameterNameHints = "all",
-              includeInlayParameterNameHintsWhenArgumentMatchesName = false,
-              includeInlayFunctionParameterTypeHints = true,
-              includeInlayVariableTypeHints = true,
-              includeInlayPropertyDeclarationTypeHints = true,
-              includeInlayFunctionLikeReturnTypeHints = true,
-              includeInlayEnumMemberValueHints = true,
-            },
-          },
-        },
-      })
-      
-      -- Python (only pyright, not ruff to avoid duplicates)
-      if not servers_already_setup["pyright"] then
-        lspconfig.pyright.setup({
-          capabilities = capabilities,
-          handlers = handlers,
-          settings = {
-            python = {
-              analysis = {
-                autoSearchPaths = true,
-                diagnosticMode = "workspace",
-                useLibraryCodeForTypes = true,
-                typeCheckingMode = "basic",
-              },
-            },
-          },
-        })
-        servers_already_setup["pyright"] = true
-      end
-      
-      -- Lua
-      lspconfig.lua_ls.setup({
-        capabilities = capabilities,
-        handlers = handlers,
-        settings = {
-          Lua = {
-            runtime = {
-              version = "LuaJIT",
-            },
-            diagnostics = {
-              globals = { "vim" },
-            },
-            workspace = {
-              library = vim.api.nvim_get_runtime_file("", true),
-              checkThirdParty = false,
-            },
-            telemetry = {
-              enable = false,
-            },
-            format = {
-              enable = false,
-            },
-          },
-        },
-      })
-      
-      -- Java
-      lspconfig.jdtls.setup({
-        capabilities = capabilities,
-        handlers = handlers,
-        cmd = { "jdtls" },
-        root_dir = function(fname)
-          return lspconfig.util.root_pattern("pom.xml", "gradle.build", ".git", "mvnw", "gradlew")(fname) or vim.fn.getcwd()
-        end,
-        settings = {
-          java = {
-            signatureHelp = { enabled = true },
-            contentProvider = { preferred = "fernflower" },
-            completion = {
-              favoriteStaticMembers = {
-                "org.junit.jupiter.api.Assertions.*",
-                "org.junit.Assert.*",
-                "org.mockito.Mockito.*",
-              },
-            },
-            sources = {
-              organizeImports = {
-                starThreshold = 9999,
-                staticStarThreshold = 9999,
-              },
-            },
-            codeGeneration = {
-              toString = {
-                template = "${object.className}{${member.name()}=${member.value}, ${otherMembers}}",
-              },
-            },
-          },
-        },
-      })
-      
-      -- Solidity
-      lspconfig.solidity_ls_nomicfoundation.setup({
-        capabilities = capabilities,
-        handlers = handlers,
-        cmd = { "nomicfoundation-solidity-language-server", "--stdio" },
-        filetypes = { "solidity" },
-        root_dir = lspconfig.util.root_pattern("hardhat.config.js", "hardhat.config.ts", "foundry.toml", "truffle.js", "truffle-config.js", "package.json", ".git"),
-        single_file_support = true,
       })
     end,
   },
