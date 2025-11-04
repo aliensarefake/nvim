@@ -173,8 +173,18 @@ return {
         },
         pickers = {
           find_files = {
-            theme = "dropdown",
-            previewer = false,
+            -- Consistent horizontal layout with preview (like grd/grr)
+            layout_strategy = "horizontal",
+            layout_config = {
+              horizontal = {
+                preview_width = 0.65,  -- Preview takes 65% of width
+                results_width = 0.35,  -- File list takes 35% of width
+                width = 0.95,          -- Use 95% of screen width
+                height = 0.85,         -- Use 85% of screen height
+                preview_cutoff = 0,    -- Always show preview
+              },
+            },
+            sorting_strategy = "ascending",
             hidden = false,
             file_ignore_patterns = {
               "^%.git/",
@@ -185,11 +195,32 @@ return {
             },
           },
           live_grep = {
-            theme = "ivy",
+            -- Same consistent layout as find_files
+            layout_strategy = "horizontal",
+            layout_config = {
+              horizontal = {
+                preview_width = 0.65,  -- Preview takes 65% of width
+                results_width = 0.35,  -- Results take 35% of width
+                width = 0.95,
+                height = 0.85,
+                preview_cutoff = 0,
+              },
+            },
+            sorting_strategy = "ascending",
           },
           buffers = {
-            theme = "dropdown",
-            previewer = false,
+            -- Also update buffers to match
+            layout_strategy = "horizontal",
+            layout_config = {
+              horizontal = {
+                preview_width = 0.65,
+                results_width = 0.35,
+                width = 0.95,
+                height = 0.85,
+                preview_cutoff = 0,
+              },
+            },
+            sorting_strategy = "ascending",
             initial_mode = "normal",
           },
         },
@@ -208,12 +239,38 @@ return {
       
       -- Keymaps
       local builtin = require("telescope.builtin")
+      local themes = require("telescope.themes")
+
+      -- Helper function for consistent layout
+      local function with_preview_layout(opts)
+        return vim.tbl_deep_extend("force", {
+          layout_strategy = "horizontal",
+          layout_config = {
+            horizontal = {
+              preview_width = 0.65,
+              results_width = 0.35,
+              width = 0.95,
+              height = 0.85,
+              preview_cutoff = 0,
+            },
+          },
+          sorting_strategy = "ascending",
+        }, opts or {})
+      end
+
+      -- File and search operations with preview
       vim.keymap.set("n", "<leader>ff", builtin.find_files, { desc = "Find files" })
       vim.keymap.set("n", "<leader>fg", builtin.live_grep, { desc = "Live grep" })
       vim.keymap.set("n", "<leader>fb", builtin.buffers, { desc = "Find buffers" })
+      vim.keymap.set("n", "<leader>fw", function()
+        builtin.grep_string(with_preview_layout())
+      end, { desc = "Find word under cursor" })
+      vim.keymap.set("n", "<leader>fr", function()
+        builtin.oldfiles(with_preview_layout())
+      end, { desc = "Recent files" })
+
+      -- Other pickers (keep simpler layouts for non-file content)
       vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Help tags" })
-      vim.keymap.set("n", "<leader>fw", builtin.grep_string, { desc = "Find word under cursor" })
-      vim.keymap.set("n", "<leader>fr", builtin.oldfiles, { desc = "Recent files" })
       vim.keymap.set("n", "<leader>fd", builtin.diagnostics, { desc = "Diagnostics" })
       vim.keymap.set("n", "<leader>fs", builtin.lsp_document_symbols, { desc = "Document symbols" })
       vim.keymap.set("n", "<leader>fS", builtin.lsp_workspace_symbols, { desc = "Workspace symbols" })
