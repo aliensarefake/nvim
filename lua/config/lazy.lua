@@ -5,6 +5,12 @@
 -- https://github.com/folke/lazy.nvim#%EF%B8%8F-configuration
 
 require("lazy").setup("plugins", {
+  -- Enable luarocks support for plugins that need it
+  rocks = {
+    enabled = true,
+    hererocks = true, -- Use hererocks to auto-install luarocks if needed
+  },
+
   -- Automatically install missing plugins on startup
   install = {
     missing = true,

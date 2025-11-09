@@ -130,17 +130,22 @@ return {
 		end,
 	},
 
-	-- Image rendering in Neovim
+	-- Image rendering in Neovim with luarocks support
 	{
 		"3rd/image.nvim",
 		ft = { "markdown" },
+		build = ":UpdateRemotePlugins",
+		dependencies = {
+			"leafo/magick", -- Required for image processing
+		},
 		config = function()
 			local ok, image = pcall(require, "image")
 			if not ok then
+				vim.notify("image.nvim failed to load", vim.log.levels.WARN)
 				return
 			end
 			image.setup({
-				backend = "kitty",
+				backend = "kitty", -- Kitty protocol (works with Ghostty)
 				integrations = {
 					markdown = {
 						enabled = true,
@@ -149,10 +154,8 @@ return {
 						only_render_image_at_cursor = false,
 					},
 				},
-				max_width = 100, -- Fixed width in columns
-				max_height = 20, -- Fixed height in rows
-				max_width_window_percentage = 40, -- Max 40% of window width
-				max_height_window_percentage = 30, -- Max 30% of window height
+				max_width = 50,
+				max_height = 12,
 				window_overlap_clear_enabled = false,
 				window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
 			})
