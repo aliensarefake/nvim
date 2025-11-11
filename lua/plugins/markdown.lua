@@ -80,13 +80,13 @@ return {
 		"iamcco/markdown-preview.nvim",
 		cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
 		ft = { "markdown" },
-		build = function()
-			vim.fn["mkdp#util#install"]()
-		end,
+		build = "cd app && npm install",
 		keys = {
 			{ "<leader>mp", "<cmd>MarkdownPreviewToggle<cr>", desc = "Markdown Preview" },
 		},
 		config = function()
+			local css_dir = vim.fn.expand("~/.config/nvim/markdown-preview-css")
+
 			vim.g.mkdp_auto_start = 0
 			vim.g.mkdp_auto_close = 1
 			vim.g.mkdp_refresh_slow = 0
@@ -110,23 +110,12 @@ return {
 				disable_filename = 0,
 				toc = {},
 			}
-			vim.g.mkdp_markdown_css = ""
-			vim.g.mkdp_highlight_css = ""
+			vim.g.mkdp_markdown_css = css_dir .. "/markdown.css"
+			vim.g.mkdp_highlight_css = css_dir .. "/highlight.css"
 			vim.g.mkdp_port = ""
 			vim.g.mkdp_page_title = "「${name}」"
 			vim.g.mkdp_filetypes = { "markdown" }
 			vim.g.mkdp_theme = "dark"
-		end,
-	},
-
-	-- Markdown formatting utilities
-	{
-		"antonk52/markdowny.nvim",
-		ft = { "markdown" },
-		config = function()
-			require("markdowny").setup({
-				filetypes = { "markdown" },
-			})
 		end,
 	},
 
