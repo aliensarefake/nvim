@@ -2,76 +2,321 @@
 -- Better markdown rendering and preview
 
 return {
-	-- Headlines.nvim for better markdown rendering
+	-- markview.nvim - Comprehensive markdown rendering
 	{
-		"lukas-reineke/headlines.nvim",
-		dependencies = "nvim-treesitter/nvim-treesitter",
-		ft = { "markdown", "org", "norg" },
+		"OXY2DEV/markview.nvim",
+		ft = { "markdown", "norg", "rmd", "org" },
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter",
+			"nvim-tree/nvim-web-devicons",
+		},
 		config = function()
-			require("headlines").setup({
-				markdown = {
-					query = vim.treesitter.query.parse(
-						"markdown",
-						[[
-              (atx_heading [
-                (atx_h1_marker)
-                (atx_h2_marker)
-                (atx_h3_marker)
-                (atx_h4_marker)
-                (atx_h5_marker)
-                (atx_h6_marker)
-              ] @headline)
+			require("markview").setup({
+				-- Rendering modes
+				modes = { "n", "no", "c" }, -- Normal, operator-pending, command mode
+				hybrid_modes = { "n" }, -- Enable hybrid mode in normal mode
 
-              (thematic_break) @dash
+				-- Callbacks for custom behavior
+				callbacks = {
+					on_enable = function(_, win)
+						vim.wo[win].conceallevel = 2
+						vim.wo[win].concealcursor = "nc"
+					end,
+				},
 
-              (fenced_code_block) @codeblock
-
-              (block_quote_marker) @quote
-              (block_quote (paragraph (inline (block_continuation) @quote)))
-              (block_quote (paragraph (block_continuation) @quote))
-              (block_quote (block_continuation) @quote)
-            ]]
-					),
-					headline_highlights = {
-						"Headline1",
-						"Headline2",
-						"Headline3",
-						"Headline4",
-						"Headline5",
-						"Headline6",
+				-- Headings configuration
+				headings = {
+					enable = true,
+					shift_width = 0,
+					heading_1 = {
+						style = "label",
+						sign = "󰼏 ",
+						padding_left = " ",
+						padding_right = " ",
+						corner_right = " ",
+						hl = "MarkviewHeading1",
 					},
-					bullet_highlights = {
-						"@text.title.1.marker.markdown",
-						"@text.title.2.marker.markdown",
-						"@text.title.3.marker.markdown",
-						"@text.title.4.marker.markdown",
-						"@text.title.5.marker.markdown",
-						"@text.title.6.marker.markdown",
+					heading_2 = {
+						style = "label",
+						sign = "󰎨 ",
+						padding_left = " ",
+						padding_right = " ",
+						corner_right = " ",
+						hl = "MarkviewHeading2",
 					},
-					bullets = { "◉", "○", "✸", "✿" },
-					codeblock_highlight = "CodeBlock",
-					dash_highlight = "Dash",
-					dash_string = "-",
-					quote_highlight = "Quote",
-					quote_string = "┃",
-					fat_headlines = true,
-					fat_headline_upper_string = "▄",
-					fat_headline_lower_string = "▀",
+					heading_3 = {
+						style = "label",
+						sign = "󰼑 ",
+						padding_left = " ",
+						padding_right = " ",
+						corner_right = " ",
+						hl = "MarkviewHeading3",
+					},
+					heading_4 = {
+						style = "label",
+						sign = "󰎲 ",
+						padding_left = " ",
+						padding_right = " ",
+						corner_right = " ",
+						hl = "MarkviewHeading4",
+					},
+					heading_5 = {
+						style = "label",
+						sign = "󰼓 ",
+						padding_left = " ",
+						padding_right = " ",
+						corner_right = " ",
+						hl = "MarkviewHeading5",
+					},
+					heading_6 = {
+						style = "label",
+						sign = "󰎴 ",
+						padding_left = " ",
+						padding_right = " ",
+						corner_right = " ",
+						hl = "MarkviewHeading6",
+					},
+				},
+
+				-- Code blocks - Enhanced rendering with more padding
+				code_blocks = {
+					enable = true,
+					style = "language",
+					position = "overlay",
+					min_width = 70,
+					pad_amount = 4,
+					pad_char = " ",
+					hl = "MarkviewCode",
+					sign = true,
+					sign_hl = "MarkviewCodeSign",
+					language_direction = "right",
+				},
+
+				-- Inline code - Subtle highlighting
+				inline_codes = {
+					enable = true,
+					corner_left = " ",
+					corner_right = " ",
+					hl = "MarkviewInlineCode",
+				},
+
+				-- Block quotes - Visual styling
+				block_quotes = {
+					enable = true,
+					default = {
+						border = "▋",
+						hl = "MarkviewBlockQuote",
+					},
+				},
+
+				-- Horizontal rules
+				horizontal_rules = {
+					enable = true,
+					parts = {
+						{
+							type = "repeating",
+							text = "─",
+							direction = "left",
+							repeat_amount = function()
+								local textoff = vim.fn.getwininfo(vim.api.nvim_get_current_win())[1].textoff
+								return math.floor((vim.o.columns - textoff) / 2)
+							end,
+							hl = "MarkviewHorizontalRule",
+						},
+					},
+				},
+
+
+				-- List items - Custom markers with minimal spacing
+				list_items = {
+					enable = true,
+					shift_width = 0,
+					indent_size = 2,
+					marker_minus = {
+						add_padding = false,
+						text = "•",
+						hl = "MarkviewListItemMinus",
+					},
+					marker_plus = {
+						add_padding = false,
+						text = "➤",
+						hl = "MarkviewListItemPlus",
+					},
+					marker_star = {
+						add_padding = false,
+						text = "★",
+						hl = "MarkviewListItemStar",
+					},
+					marker_dot = {
+						add_padding = false,
+						text = "•",
+						hl = "MarkviewListItemDot",
+					},
+				},
+
+				-- Checkboxes - Enhanced icons with scope highlighting and no marker
+				checkboxes = {
+					enable = true,
+					marker_minus = { add_padding = false, text = "" },
+					marker_plus = { add_padding = false, text = "" },
+					marker_star = { add_padding = false, text = "" },
+					checked = {
+						text = " ",
+						scope_hl = "MarkviewCheckboxChecked",
+					},
+					unchecked = {
+						text = " ",
+						scope_hl = "MarkviewCheckboxUnchecked",
+					},
+					pending = {
+						text = "󰥔 ",
+						scope_hl = "MarkviewCheckboxPending",
+					},
+					custom = {
+						{
+							match = "~",
+							text = "󰰱 ",
+							scope_hl = "MarkviewCheckboxCancelled",
+						},
+						{
+							match = ">",
+							text = " ",
+							scope_hl = "MarkviewCheckboxForwarded",
+						},
+					},
+				},
+
+				-- Tables - Border and alignment
+				tables = {
+					enable = true,
+					text = {
+						"╭",
+						"─",
+						"╮",
+						"├",
+						"┤",
+						"╰",
+						"╯",
+						"│",
+					},
+					hl = {
+						"MarkviewTableHeader",
+						"MarkviewTableBorder",
+						"MarkviewTableHeader",
+						"MarkviewTableBorder",
+						"MarkviewTableBorder",
+						"MarkviewTableBorder",
+						"MarkviewTableBorder",
+						"MarkviewTableBorder",
+					},
+					use_virt_lines = true,
+				},
+
+				-- Links - Clean display
+				links = {
+					enable = true,
+					hyperlinks = {
+						icon = " ",
+						hl = "MarkviewHyperlink",
+					},
+					images = {
+						icon = " ",
+						hl = "MarkviewImage",
+					},
+					emails = {
+						icon = " ",
+						hl = "MarkviewEmail",
+					},
+					internal_links = {
+						icon = " ",
+						hl = "MarkviewInternalLink",
+					},
+				},
+
+				-- LaTeX - Math rendering
+				latex = {
+					enable = true,
+					inline = {
+						enable = true,
+						hl = "MarkviewLatexInline",
+					},
+					block = {
+						enable = true,
+						hl = "MarkviewLatexBlock",
+					},
+				},
+
+				-- HTML - Inline HTML support
+				html = {
+					enable = true,
+					tags = {
+						enable = true,
+					},
+					entities = {
+						enable = true,
+					},
 				},
 			})
 
-			-- Define custom highlight groups
-			vim.cmd([[
-        highlight Headline1 guibg=#1e2718 guifg=#c9d1d9
-        highlight Headline2 guibg=#21262d guifg=#c9d1d9
-        highlight Headline3 guibg=#30363d guifg=#c9d1d9
-        highlight Headline4 guibg=#484f58 guifg=#c9d1d9
-        highlight Headline5 guibg=#484f58 guifg=#c9d1d9
-        highlight Headline6 guibg=#484f58 guifg=#c9d1d9
-        highlight CodeBlock guibg=#1c1c1c
-        highlight Dash guifg=#484f58
-        highlight Quote guifg=#484f58
-      ]])
+			-- Custom highlight groups
+			vim.api.nvim_create_autocmd("ColorScheme", {
+				pattern = "*",
+				callback = function()
+					-- Headings with backgrounds
+					vim.api.nvim_set_hl(0, "MarkviewHeading1", { bg = "#3d2828", fg = "#ff6e6e", bold = true })
+					vim.api.nvim_set_hl(0, "MarkviewHeading2", { bg = "#3d3328", fg = "#ff9e64", bold = true })
+					vim.api.nvim_set_hl(0, "MarkviewHeading3", { bg = "#3d3b28", fg = "#ffd766", bold = true })
+					vim.api.nvim_set_hl(0, "MarkviewHeading4", { bg = "#283d37", fg = "#73daca", bold = true })
+					vim.api.nvim_set_hl(0, "MarkviewHeading5", { bg = "#28333d", fg = "#7aa2f7", bold = true })
+					vim.api.nvim_set_hl(0, "MarkviewHeading6", { bg = "#33283d", fg = "#bb9af7", bold = true })
+
+					-- Code blocks with distinct background (more padding instead of borders)
+					vim.api.nvim_set_hl(0, "MarkviewCode", { bg = "#16161e" })
+					vim.api.nvim_set_hl(0, "MarkviewCodeSign", { fg = "#7aa2f7" })
+					vim.api.nvim_set_hl(0, "MarkviewInlineCode", { bg = "#283457", fg = "#bb9af7" })
+
+					-- Block quotes
+					vim.api.nvim_set_hl(0, "MarkviewBlockQuote", { fg = "#7aa2f7" })
+
+					-- Horizontal rules
+					vim.api.nvim_set_hl(0, "MarkviewHorizontalRule", { fg = "#3b4261" })
+
+					-- Lists
+					vim.api.nvim_set_hl(0, "MarkviewListItemMinus", { fg = "#7aa2f7" })
+					vim.api.nvim_set_hl(0, "MarkviewListItemPlus", { fg = "#9ece6a" })
+					vim.api.nvim_set_hl(0, "MarkviewListItemStar", { fg = "#ff9e64" })
+					vim.api.nvim_set_hl(0, "MarkviewListItemDot", { fg = "#7dcfff" })
+
+					-- Checkboxes with improved appearance
+					vim.api.nvim_set_hl(0, "MarkviewCheckboxChecked", { fg = "#9ece6a", bold = true })
+					vim.api.nvim_set_hl(0, "MarkviewCheckboxUnchecked", { fg = "#545c7e", bold = true })
+					vim.api.nvim_set_hl(0, "MarkviewCheckboxPending", { fg = "#ff9e64", bold = true })
+					vim.api.nvim_set_hl(0, "MarkviewCheckboxCancelled", { fg = "#f7768e", bold = true })
+					vim.api.nvim_set_hl(0, "MarkviewCheckboxForwarded", { fg = "#7dcfff", bold = true })
+
+					-- Tables
+					vim.api.nvim_set_hl(0, "MarkviewTableHeader", { fg = "#7aa2f7", bold = true })
+					vim.api.nvim_set_hl(0, "MarkviewTableBorder", { fg = "#3b4261" })
+
+					-- Links
+					vim.api.nvim_set_hl(0, "MarkviewHyperlink", { fg = "#7aa2f7", underline = true })
+					vim.api.nvim_set_hl(0, "MarkviewImage", { fg = "#bb9af7" })
+					vim.api.nvim_set_hl(0, "MarkviewEmail", { fg = "#7dcfff", underline = true })
+					vim.api.nvim_set_hl(0, "MarkviewInternalLink", { fg = "#9ece6a", underline = true })
+
+					-- LaTeX
+					vim.api.nvim_set_hl(0, "MarkviewLatexInline", { fg = "#bb9af7" })
+					vim.api.nvim_set_hl(0, "MarkviewLatexBlock", { bg = "#1a1b26", fg = "#bb9af7" })
+				end,
+			})
+
+			-- Apply highlights immediately
+			vim.cmd("doautocmd ColorScheme")
+
+			-- Keymaps for markview control (no conflicts with existing markdown keymaps)
+			vim.keymap.set("n", "<leader>mv", "<cmd>Markview toggle<cr>", { desc = "Toggle Markview" })
+			vim.keymap.set("n", "<leader>mS", "<cmd>Markview splitToggle<cr>", { desc = "Toggle Markview Split" })
+			vim.keymap.set("n", "<leader>mH", "<cmd>Markview hybridToggle<cr>", { desc = "Toggle Markview Hybrid" })
 		end,
 	},
 
