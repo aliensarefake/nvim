@@ -50,13 +50,8 @@ return {
       
       -- Optional, configure key mappings. These are the defaults.
       mappings = {
-        -- Overrides the 'gf' mapping to work on markdown/wiki links within your vault.
-        ["gf"] = {
-          action = function()
-            return require("obsidian").util.gf_passthrough()
-          end,
-          opts = { noremap = false, expr = true, buffer = true },
-        },
+        -- Disable obsidian's gf override to avoid conflicts
+        -- We'll use a custom mapping instead
         -- Toggle check-boxes.
         ["<leader>ch"] = {
           action = function()
@@ -150,7 +145,59 @@ return {
       -- always use this finder.
       finder = "telescope.nvim",
     })
-    
+
+    -- Custom gf mapping for markdown files that handles both internal and external links
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "markdown",
+      callback = function()
+        vim.keymap.set("n", "gf", function()
+          local line = vim.api.nvim_get_current_line()
+          local col = vim.api.nvim_win_get_cursor(0)[2] + 1
+
+          -- Try to find markdown link [text](url)
+          local link_pattern = "%[.-%]%((.-)%)"
+          local start_pos = 1
+
+          while true do
+            local link_start, link_end, url = line:find(link_pattern, start_pos)
+            if not link_start then break end
+
+            -- Check if cursor is within this link
+            if col >= link_start and col <= link_end then
+              if url:match("^https?://") then
+                -- External URL - open in browser
+                vim.fn.jobstart({"open", url})
+                return
+              elseif url:match("^[^/].*%.md$") or not url:match("%.") then
+                -- Markdown file or internal note - use ObsidianFollowLink
+                vim.cmd("ObsidianFollowLink")
+                return
+              end
+            end
+            start_pos = link_end + 1
+          end
+
+          -- Try wiki-style link [[note]]
+          local wiki_pattern = "%[%[(.-)%]%]"
+          start_pos = 1
+
+          while true do
+            local link_start, link_end, note = line:find(wiki_pattern, start_pos)
+            if not link_start then break end
+
+            if col >= link_start and col <= link_end then
+              vim.cmd("ObsidianFollowLink")
+              return
+            end
+            start_pos = link_end + 1
+          end
+
+          -- Fallback to default gf
+          vim.cmd("normal! gf")
+        end, { buffer = true, desc = "Go to file under cursor (enhanced for markdown)" })
+      end,
+    })
+
     -- Optional, override the default keymaps
     vim.keymap.set("n", "<leader>on", "<cmd>ObsidianNew<cr>", { desc = "New Obsidian note" })
     vim.keymap.set("n", "<leader>oo", "<cmd>ObsidianOpen<cr>", { desc = "Open in Obsidian app" })
