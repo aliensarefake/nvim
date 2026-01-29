@@ -19,7 +19,7 @@ return {
 				-- Callbacks for custom behavior
 				callbacks = {
 					on_enable = function(_, win)
-						vim.wo[win].conceallevel = 2
+						vim.wo[win].conceallevel = 3
 						vim.wo[win].concealcursor = "nc"
 					end,
 				},
@@ -84,7 +84,7 @@ return {
 					style = "language",
 					position = "overlay",
 					min_width = 70,
-					pad_amount = 4,
+					pad_amount = 0,
 					pad_char = " ",
 					hl = "MarkviewCode",
 					sign = true,
@@ -95,8 +95,8 @@ return {
 				-- Inline code - Subtle highlighting
 				inline_codes = {
 					enable = true,
-					corner_left = " ",
-					corner_right = " ",
+					corner_left = "",
+					corner_right = "",
 					hl = "MarkviewInlineCode",
 				},
 
@@ -125,7 +125,6 @@ return {
 						},
 					},
 				},
-
 
 				-- List items - Custom markers with minimal spacing
 				list_items = {

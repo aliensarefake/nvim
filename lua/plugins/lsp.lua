@@ -52,7 +52,6 @@ return {
       require("neodev").setup()
 
       -- LSP settings
-      local lspconfig = require("lspconfig")
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
       -- Border for floating windows
@@ -73,7 +72,23 @@ return {
         ["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = border }),
       }
 
-      -- Setup servers manually (compatible with older mason-lspconfig)
+      -- Temporarily suppress the deprecation warning for lspconfig
+      -- This is a known issue with nvim-lspconfig and Neovim 0.11+
+      -- The warning will be resolved when nvim-lspconfig v3.0.0 is released
+      local original_notify = vim.notify
+      vim.notify = function(msg, level, opts)
+        if type(msg) == "string" and msg:match("require%('lspconfig'%).*is deprecated") then
+          return -- Suppress this specific deprecation warning
+        end
+        original_notify(msg, level, opts)
+      end
+
+      local lspconfig = require("lspconfig")
+
+      -- Restore original notify function
+      vim.notify = original_notify
+
+      -- Setup servers manually
       -- C/C++
       lspconfig.clangd.setup({
         capabilities = capabilities,
@@ -100,8 +115,30 @@ return {
         handlers = handlers,
       })
 
-      -- Python - Let nvim-lspconfig handle it automatically
-      -- Don't set up pyright here to avoid duplicates
+      -- Python
+      lspconfig.pyright.setup({
+        capabilities = capabilities,
+        handlers = handlers,
+        flags = {
+          debounce_text_changes = 300,  -- Wait 300ms after typing stops before analysing
+        },
+        settings = {
+          python = {
+            analysis = {
+              typeCheckingMode = "basic",           -- Faster than "standard", catches common errors
+              diagnosticMode = "openFilesOnly",     -- Only analyse open files, not entire workspace
+              autoSearchPaths = true,
+              useLibraryCodeForTypes = true,
+              diagnosticSeverityOverrides = {
+                reportGeneralTypeIssues = "warning",
+                reportOptionalMemberAccess = "none",     -- Too noisy
+                reportOptionalSubscript = "none",
+                reportPrivateImportUsage = "none",
+              },
+            },
+          },
+        },
+      })
 
       -- Lua
       lspconfig.lua_ls.setup({

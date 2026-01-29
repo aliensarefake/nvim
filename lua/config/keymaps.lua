@@ -35,11 +35,11 @@ keymap("n", "<leader>we", "<C-w>=", { desc = "Equal window sizes" })
 keymap("n", "<leader>wc", ":close<CR>", { desc = "Close window" })
 keymap("n", "<leader>wo", ":only<CR>", { desc = "Close other windows" })
 
--- Resize windows with arrows
-keymap("n", "<C-Up>", ":resize +2<CR>", opts)
-keymap("n", "<C-Down>", ":resize -2<CR>", opts)
-keymap("n", "<C-Left>", ":vertical resize -2<CR>", opts)
-keymap("n", "<C-Right>", ":vertical resize +2<CR>", opts)
+-- Resize windows with hjkl (using Alt/Option)
+keymap("n", "<M-k>", ":resize +2<CR>", opts)
+keymap("n", "<M-j>", ":resize -2<CR>", opts)
+keymap("n", "<M-h>", ":vertical resize -2<CR>", opts)
+keymap("n", "<M-l>", ":vertical resize +2<CR>", opts)
 
 -- Buffer navigation
 keymap("n", "<S-l>", ":bnext<CR>", opts)
@@ -197,5 +197,45 @@ vim.api.nvim_create_autocmd("FileType", {
         vim.api.nvim_put({"- [ ] "}, "c", true, false)
       end
     end, vim.tbl_extend("force", opts, { desc = "Toggle checkbox" }))
+
+    -- Obsidian wiki link wrapper
+    keymap("v", "<leader>ml", "c[[<C-r>\"]]<Esc>", vim.tbl_extend("force", opts, { desc = "Wrap selection in [[ ]]" }))
+
+    keymap("n", "<leader>ml", function()
+      local count = vim.v.count1
+      local pos = vim.api.nvim_win_get_cursor(0)
+      local row = pos[1] - 1            -- 0-indexed row
+      local col = pos[2]                -- 0-indexed col
+      local line = vim.api.nvim_buf_get_lines(0, row, row + 1, false)[1]
+
+      -- All string ops use 1-indexed positions
+      -- Find start of current word
+      local start = col + 1  -- convert to 1-indexed
+      while start > 1 and line:sub(start - 1, start - 1):match('%w') do
+        start = start - 1
+      end
+
+      -- Scan forward through count words
+      local i = start
+      local words_found = 0
+      local finish = start
+      while i <= #line and words_found < count do
+        if line:sub(i, i):match('%w') then
+          -- Scan to end of this word
+          while i <= #line and line:sub(i, i):match('%w') do
+            i = i + 1
+          end
+          finish = i - 1  -- last char of this word
+          words_found = words_found + 1
+        else
+          i = i + 1
+        end
+      end
+
+      -- Wrap text in [[ ]]
+      local new_line = line:sub(1, start - 1) .. '[[' .. line:sub(start, finish) .. ']]' .. line:sub(finish + 1)
+      vim.api.nvim_buf_set_lines(0, row, row + 1, false, {new_line})
+      vim.api.nvim_win_set_cursor(0, {row + 1, start + 1})
+    end, vim.tbl_extend("force", opts, { desc = "Wrap [count] word(s) in [[ ]]" }))
   end,
 })

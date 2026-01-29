@@ -176,6 +176,18 @@ return {
         { name = "buffer" },
       }),
     })
+
+    -- Setup for markdown to include obsidian sources
+    cmp.setup.filetype("markdown", {
+      sources = cmp.config.sources({
+        { name = "obsidian" },
+        { name = "obsidian_new" },
+        { name = "nvim_lsp" },
+        { name = "luasnip" },
+        { name = "buffer" },
+        { name = "path" },
+      }),
+    })
     
     -- Use buffer source for `/` and `?`
     cmp.setup.cmdline({ "/", "?" }, {
