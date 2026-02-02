@@ -157,26 +157,66 @@ vim.api.nvim_create_autocmd("FileType", {
   pattern = "markdown",
   callback = function()
     local opts = { buffer = true }
-    
+
+    -- Helper function to wrap word(s) with delimiters
+    local function wrap_words(left, right)
+      return function()
+        local count = vim.v.count1
+        local pos = vim.api.nvim_win_get_cursor(0)
+        local row = pos[1] - 1            -- 0-indexed row
+        local col = pos[2]                -- 0-indexed col
+        local line = vim.api.nvim_buf_get_lines(0, row, row + 1, false)[1]
+
+        -- All string ops use 1-indexed positions
+        -- Find start of current word
+        local start = col + 1  -- convert to 1-indexed
+        while start > 1 and line:sub(start - 1, start - 1):match('%w') do
+          start = start - 1
+        end
+
+        -- Scan forward through count words
+        local i = start
+        local words_found = 0
+        local finish = start
+        while i <= #line and words_found < count do
+          if line:sub(i, i):match('%w') then
+            -- Scan to end of this word
+            while i <= #line and line:sub(i, i):match('%w') do
+              i = i + 1
+            end
+            finish = i - 1  -- last char of this word
+            words_found = words_found + 1
+          else
+            i = i + 1
+          end
+        end
+
+        -- Wrap text with delimiters
+        local new_line = line:sub(1, start - 1) .. left .. line:sub(start, finish) .. right .. line:sub(finish + 1)
+        vim.api.nvim_buf_set_lines(0, row, row + 1, false, {new_line})
+        vim.api.nvim_win_set_cursor(0, {row + 1, start + 1})
+      end
+    end
+
     -- Bold
     keymap("v", "<leader>mb", "c**<C-r>\"**<Esc>", vim.tbl_extend("force", opts, { desc = "Bold selection" }))
-    keymap("n", "<leader>mb", "viw<Esc>a**<Esc>bi**<Esc>", vim.tbl_extend("force", opts, { desc = "Bold word" }))
-    
+    keymap("n", "<leader>mb", wrap_words("**", "**"), vim.tbl_extend("force", opts, { desc = "Bold [count] word(s)" }))
+
     -- Italic
     keymap("v", "<leader>mi", "c*<C-r>\"*<Esc>", vim.tbl_extend("force", opts, { desc = "Italic selection" }))
-    keymap("n", "<leader>mi", "viw<Esc>a*<Esc>bi*<Esc>", vim.tbl_extend("force", opts, { desc = "Italic word" }))
-    
+    keymap("n", "<leader>mi", wrap_words("*", "*"), vim.tbl_extend("force", opts, { desc = "Italic [count] word(s)" }))
+
     -- Strikethrough
     keymap("v", "<leader>ms", "c~~<C-r>\"~~<Esc>", vim.tbl_extend("force", opts, { desc = "Strikethrough selection" }))
-    keymap("n", "<leader>ms", "viw<Esc>a~~<Esc>bi~~<Esc>", vim.tbl_extend("force", opts, { desc = "Strikethrough word" }))
-    
+    keymap("n", "<leader>ms", wrap_words("~~", "~~"), vim.tbl_extend("force", opts, { desc = "Strikethrough [count] word(s)" }))
+
     -- Code
     keymap("v", "<leader>mc", "c`<C-r>\"`<Esc>", vim.tbl_extend("force", opts, { desc = "Code selection" }))
-    keymap("n", "<leader>mc", "viw<Esc>a`<Esc>bi`<Esc>", vim.tbl_extend("force", opts, { desc = "Code word" }))
-    
+    keymap("n", "<leader>mc", wrap_words("`", "`"), vim.tbl_extend("force", opts, { desc = "Code [count] word(s)" }))
+
     -- Highlight
     keymap("v", "<leader>mh", "c==<C-r>\"==<Esc>", vim.tbl_extend("force", opts, { desc = "Highlight selection" }))
-    keymap("n", "<leader>mh", "viw<Esc>a==<Esc>bi==<Esc>", vim.tbl_extend("force", opts, { desc = "Highlight word" }))
+    keymap("n", "<leader>mh", wrap_words("==", "=="), vim.tbl_extend("force", opts, { desc = "Highlight [count] word(s)" }))
     
     -- Toggle checkbox
     keymap("n", "<leader>mt", function()
@@ -200,42 +240,6 @@ vim.api.nvim_create_autocmd("FileType", {
 
     -- Obsidian wiki link wrapper
     keymap("v", "<leader>ml", "c[[<C-r>\"]]<Esc>", vim.tbl_extend("force", opts, { desc = "Wrap selection in [[ ]]" }))
-
-    keymap("n", "<leader>ml", function()
-      local count = vim.v.count1
-      local pos = vim.api.nvim_win_get_cursor(0)
-      local row = pos[1] - 1            -- 0-indexed row
-      local col = pos[2]                -- 0-indexed col
-      local line = vim.api.nvim_buf_get_lines(0, row, row + 1, false)[1]
-
-      -- All string ops use 1-indexed positions
-      -- Find start of current word
-      local start = col + 1  -- convert to 1-indexed
-      while start > 1 and line:sub(start - 1, start - 1):match('%w') do
-        start = start - 1
-      end
-
-      -- Scan forward through count words
-      local i = start
-      local words_found = 0
-      local finish = start
-      while i <= #line and words_found < count do
-        if line:sub(i, i):match('%w') then
-          -- Scan to end of this word
-          while i <= #line and line:sub(i, i):match('%w') do
-            i = i + 1
-          end
-          finish = i - 1  -- last char of this word
-          words_found = words_found + 1
-        else
-          i = i + 1
-        end
-      end
-
-      -- Wrap text in [[ ]]
-      local new_line = line:sub(1, start - 1) .. '[[' .. line:sub(start, finish) .. ']]' .. line:sub(finish + 1)
-      vim.api.nvim_buf_set_lines(0, row, row + 1, false, {new_line})
-      vim.api.nvim_win_set_cursor(0, {row + 1, start + 1})
-    end, vim.tbl_extend("force", opts, { desc = "Wrap [count] word(s) in [[ ]]" }))
+    keymap("n", "<leader>ml", wrap_words("[[", "]]"), vim.tbl_extend("force", opts, { desc = "Wiki link [count] word(s)" }))
   end,
 })

@@ -100,6 +100,12 @@ return {
 					hl = "MarkviewInlineCode",
 				},
 
+				-- Highlights - ==highlighted text==
+				highlights = {
+					enable = true,
+					hl = "MarkviewHighlight",
+				},
+
 				-- Block quotes - Visual styling
 				block_quotes = {
 					enable = true,
@@ -236,8 +242,7 @@ return {
 				latex = {
 					enable = true,
 					inline = {
-						enable = true,
-						hl = "MarkviewLatexInline",
+						enable = false,
 					},
 					block = {
 						enable = true,
@@ -273,6 +278,9 @@ return {
 					vim.api.nvim_set_hl(0, "MarkviewCode", { bg = "#16161e" })
 					vim.api.nvim_set_hl(0, "MarkviewCodeSign", { fg = "#7aa2f7" })
 					vim.api.nvim_set_hl(0, "MarkviewInlineCode", { bg = "#283457", fg = "#bb9af7" })
+
+					-- Highlights (==text==)
+					vim.api.nvim_set_hl(0, "MarkviewHighlight", { bg = "#3d3410", fg = "#ffd766" })
 
 					-- Block quotes
 					vim.api.nvim_set_hl(0, "MarkviewBlockQuote", { fg = "#7aa2f7" })
