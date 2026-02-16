@@ -100,6 +100,15 @@ local function toggle()
       state.win = nil
     end,
   })
+
+  -- auto-close when focus leaves the float (e.g. <C-w>j)
+  vim.api.nvim_create_autocmd("WinLeave", {
+    buffer = state.buf,
+    once = true,
+    callback = function()
+      vim.schedule(close)
+    end,
+  })
 end
 
 function M.setup()

@@ -34,6 +34,7 @@ return {
           "solidity_ls_nomicfoundation", -- Solidity
         },
         automatic_installation = true,
+        automatic_enable = false,
       })
     end,
   },
