@@ -119,9 +119,6 @@ return {
       lspconfig.pyright.setup({
         capabilities = capabilities,
         handlers = handlers,
-        flags = {
-          debounce_text_changes = 300,  -- Wait 300ms after typing stops before analysing
-        },
         settings = {
           python = {
             analysis = {
@@ -170,14 +167,39 @@ return {
         handlers = handlers,
       })
 
-      -- Other servers
-      local other_servers = { "move_analyzer", "rust_analyzer" }
-      for _, server in ipairs(other_servers) do
-        lspconfig[server].setup({
-          capabilities = capabilities,
-          handlers = handlers,
-        })
-      end
+      -- Rust
+      lspconfig.rust_analyzer.setup({
+        capabilities = capabilities,
+        handlers = handlers,
+        settings = {
+          ["rust-analyzer"] = {
+            check = {
+              command = "clippy",
+              extraArgs = { "--no-deps" },
+            },
+            cargo = {
+              targetDir = true,
+            },
+            procMacro = { enable = true },
+            diagnostics = {
+              disabled = { "unresolved-proc-macro" },
+            },
+            files = {
+              excludeDirs = { ".git", ".direnv", "node_modules", "target" },
+            },
+            inlayHints = {
+              closingBraceHints = { enable = false },
+              lifetimeElisionHints = { enable = "never" },
+            },
+          },
+        },
+      })
+
+      -- Move
+      lspconfig.move_analyzer.setup({
+        capabilities = capabilities,
+        handlers = handlers,
+      })
 
 
       -- Global mappings

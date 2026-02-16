@@ -30,14 +30,6 @@ autocmd("VimResized", {
   command = "tabdo wincmd =",
 })
 
--- Remove trailing whitespace on save
-augroup("TrimWhitespace", { clear = true })
-autocmd("BufWritePre", {
-  group = "TrimWhitespace",
-  pattern = "*",
-  command = "%s/\\s\\+$//e",
-})
-
 -- Return to last edit position when opening files
 augroup("LastEditPosition", { clear = true })
 autocmd("BufReadPost", {
