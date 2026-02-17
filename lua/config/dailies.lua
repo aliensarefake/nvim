@@ -5,6 +5,7 @@ local M = {}
 
 local state = { buf = nil, win = nil }
 local dailies_dir = vim.fn.expand("~/notes/tasks/dailies")
+local augroup = vim.api.nvim_create_augroup("DailiesFloat", { clear = true })
 
 local function today_path()
   return string.format("%s/%s/%s.md", dailies_dir, os.date("%Y"), os.date("%d-%m"))
@@ -23,9 +24,11 @@ local function ensure_file(path)
   }, path)
 end
 
-local function save_buf()
-  if state.buf and vim.api.nvim_buf_is_valid(state.buf) and vim.bo[state.buf].modified then
-    vim.api.nvim_buf_call(state.buf, function() vim.cmd("silent write") end)
+local function save_float_buf()
+  if not (state.win and vim.api.nvim_win_is_valid(state.win)) then return end
+  local buf = vim.api.nvim_win_get_buf(state.win)
+  if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].modified then
+    vim.api.nvim_buf_call(buf, function() vim.cmd("silent write") end)
   end
 end
 
@@ -34,9 +37,17 @@ local function close()
     state.win = nil
     return
   end
-  save_buf()
+  save_float_buf()
   vim.api.nvim_win_close(state.win, true)
   state.win = nil
+  -- wipe all float-related autocmds; keymaps left on buffers become no-ops
+  vim.api.nvim_create_augroup("DailiesFloat", { clear = true })
+end
+
+local function set_close_keymaps(buf)
+  local kopts = { buffer = buf, silent = true }
+  vim.keymap.set("n", "q", close, kopts)
+  vim.keymap.set("n", "<Esc>", close, kopts)
 end
 
 local function toggle()
@@ -86,27 +97,41 @@ local function toggle()
   wo.conceallevel = 3
   wo.concealcursor = "nc"
 
-  -- close with q or Esc
-  local kopts = { buffer = state.buf, silent = true }
-  vim.keymap.set("n", "q", close, kopts)
-  vim.keymap.set("n", "<Esc>", close, kopts)
+  set_close_keymaps(state.buf)
 
-  -- auto-save + cleanup if window closed by other means (:q, <C-w>c, etc.)
-  vim.api.nvim_create_autocmd("WinClosed", {
-    pattern = tostring(state.win),
-    once = true,
+  -- reset augroup so we don't stack autocmds across reopens
+  vim.api.nvim_create_augroup("DailiesFloat", { clear = true })
+
+  -- re-bind close keymaps whenever a new buffer enters the float
+  vim.api.nvim_create_autocmd("BufEnter", {
+    group = augroup,
     callback = function()
-      save_buf()
-      state.win = nil
+      if state.win and vim.api.nvim_win_is_valid(state.win)
+        and vim.api.nvim_get_current_win() == state.win then
+        set_close_keymaps(vim.api.nvim_get_current_buf())
+      end
     end,
   })
 
-  -- auto-close when focus leaves the float (e.g. <C-w>j)
+  -- auto-close when focus leaves the float
   vim.api.nvim_create_autocmd("WinLeave", {
-    buffer = state.buf,
+    group = augroup,
+    callback = function()
+      if vim.api.nvim_get_current_win() == state.win then
+        vim.schedule(close)
+      end
+    end,
+  })
+
+  -- safety net: if the window is destroyed by :q, :bdelete, etc.
+  vim.api.nvim_create_autocmd("WinClosed", {
+    group = augroup,
+    pattern = tostring(state.win),
     once = true,
     callback = function()
-      vim.schedule(close)
+      save_float_buf()
+      state.win = nil
+      vim.api.nvim_create_augroup("DailiesFloat", { clear = true })
     end,
   })
 end
