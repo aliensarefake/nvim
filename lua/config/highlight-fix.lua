@@ -26,31 +26,6 @@ function M.setup()
     end,
   })
   
-  -- Force redraw on certain events to clear ghost highlights
-  augroup("ForceRedraw", { clear = true })
-  autocmd({ "CursorMoved", "CursorMovedI" }, {
-    group = "ForceRedraw",
-    callback = function()
-      -- Skip for markdown files to avoid breaking Obsidian rendering
-      local ft = vim.bo.filetype
-      if ft == 'markdown' or ft == 'md' then
-        return
-      end
-      
-      local mode = vim.api.nvim_get_mode().mode
-      if mode ~= 'v' and mode ~= 'V' and mode ~= '\x16' then
-        -- Clear only non-diagnostic namespaces to preserve LSP diagnostics
-        local namespaces = vim.api.nvim_get_namespaces()
-        for name, ns_id in pairs(namespaces) do
-          -- Skip diagnostic namespaces (they typically contain "diagnostic" in the name)
-          if not string.match(name, "diagnostic") and not string.match(name, "vim.lsp") then
-            pcall(vim.api.nvim_buf_clear_namespace, 0, ns_id, 0, -1)
-          end
-        end
-      end
-    end,
-  })
-  
   -- Clear search highlights more aggressively
   augroup("ClearSearchHighlight", { clear = true })
   autocmd({ "InsertEnter", "CursorMoved" }, {

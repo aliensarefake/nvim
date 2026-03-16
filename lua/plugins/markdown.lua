@@ -375,10 +375,7 @@ return {
 	{
 		"3rd/image.nvim",
 		ft = { "markdown" },
-		build = ":UpdateRemotePlugins",
-		dependencies = {
-			"leafo/magick", -- Required for image processing
-		},
+		rocks = { "magick" }, -- installs via luarocks so require("magick") works
 		config = function()
 			local ok, image = pcall(require, "image")
 			if not ok then
@@ -395,9 +392,10 @@ return {
 						only_render_image_at_cursor = false,
 					},
 				},
+				tmux_show_only_in_active_window = true,
 				max_width = 50,
 				max_height = 12,
-				window_overlap_clear_enabled = false,
+				window_overlap_clear_enabled = true,
 				window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
 			})
 		end,

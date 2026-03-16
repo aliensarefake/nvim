@@ -35,11 +35,11 @@ keymap("n", "<leader>we", "<C-w>=", { desc = "Equal window sizes" })
 keymap("n", "<leader>wc", ":close<CR>", { desc = "Close window" })
 keymap("n", "<leader>wo", ":only<CR>", { desc = "Close other windows" })
 
--- Resize windows with hjkl (using Alt/Option)
-keymap("n", "<M-k>", ":resize +2<CR>", opts)
-keymap("n", "<M-j>", ":resize -2<CR>", opts)
-keymap("n", "<M-h>", ":vertical resize -2<CR>", opts)
-keymap("n", "<M-l>", ":vertical resize +2<CR>", opts)
+-- Resize windows with hjkl (using Alt/Option) — only when splits exist
+keymap("n", "<M-k>", function() if vim.fn.winnr("$") > 1 then vim.cmd("resize +2") end end, opts)
+keymap("n", "<M-j>", function() if vim.fn.winnr("$") > 1 then vim.cmd("resize -2") end end, opts)
+keymap("n", "<M-h>", function() if vim.fn.winnr("$") > 1 then vim.cmd("vertical resize -2") end end, opts)
+keymap("n", "<M-l>", function() if vim.fn.winnr("$") > 1 then vim.cmd("vertical resize +2") end end, opts)
 
 -- Buffer navigation
 keymap("n", "<S-l>", ":bnext<CR>", opts)
