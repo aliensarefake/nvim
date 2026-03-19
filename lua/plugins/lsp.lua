@@ -52,10 +52,8 @@ return {
       -- Setup neodev for Neovim Lua development
       require("neodev").setup()
 
-      -- LSP settings
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-      -- Border for floating windows
       local border = {
         { "┌", "FloatBorder" },
         { "─", "FloatBorder" },
@@ -67,33 +65,18 @@ return {
         { "│", "FloatBorder" },
       }
 
-      -- LSP handlers with borders
       local handlers = {
         ["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = border }),
         ["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = border }),
       }
 
-      -- Temporarily suppress the deprecation warning for lspconfig
-      -- This is a known issue with nvim-lspconfig and Neovim 0.11+
-      -- The warning will be resolved when nvim-lspconfig v3.0.0 is released
-      local original_notify = vim.notify
-      vim.notify = function(msg, level, opts)
-        if type(msg) == "string" and msg:match("require%('lspconfig'%).*is deprecated") then
-          return -- Suppress this specific deprecation warning
-        end
-        original_notify(msg, level, opts)
-      end
-
-      local lspconfig = require("lspconfig")
-
-      -- Restore original notify function
-      vim.notify = original_notify
-
-      -- Setup servers manually
-      -- C/C++
-      lspconfig.clangd.setup({
+      -- Global defaults for all servers
+      vim.lsp.config("*", {
         capabilities = capabilities,
         handlers = handlers,
+      })
+
+      vim.lsp.config("clangd", {
         cmd = {
           "clangd",
           "--background-index",
@@ -110,26 +93,17 @@ return {
         },
       })
 
-      -- JavaScript/TypeScript
-      lspconfig.ts_ls.setup({
-        capabilities = capabilities,
-        handlers = handlers,
-      })
-
-      -- Python
-      lspconfig.pyright.setup({
-        capabilities = capabilities,
-        handlers = handlers,
+      vim.lsp.config("pyright", {
         settings = {
           python = {
             analysis = {
-              typeCheckingMode = "basic",           -- Faster than "standard", catches common errors
-              diagnosticMode = "openFilesOnly",     -- Only analyse open files, not entire workspace
+              typeCheckingMode = "basic",
+              diagnosticMode = "openFilesOnly",
               autoSearchPaths = true,
               useLibraryCodeForTypes = true,
               diagnosticSeverityOverrides = {
                 reportGeneralTypeIssues = "warning",
-                reportOptionalMemberAccess = "none",     -- Too noisy
+                reportOptionalMemberAccess = "none",
                 reportOptionalSubscript = "none",
                 reportPrivateImportUsage = "none",
               },
@@ -138,10 +112,7 @@ return {
         },
       })
 
-      -- Lua
-      lspconfig.lua_ls.setup({
-        capabilities = capabilities,
-        handlers = handlers,
+      vim.lsp.config("lua_ls", {
         settings = {
           Lua = {
             runtime = { version = "LuaJIT" },
@@ -156,22 +127,7 @@ return {
         },
       })
 
-      -- Java
-      lspconfig.jdtls.setup({
-        capabilities = capabilities,
-        handlers = handlers,
-      })
-
-      -- Solidity
-      lspconfig.solidity_ls_nomicfoundation.setup({
-        capabilities = capabilities,
-        handlers = handlers,
-      })
-
-      -- Rust
-      lspconfig.rust_analyzer.setup({
-        capabilities = capabilities,
-        handlers = handlers,
+      vim.lsp.config("rust_analyzer", {
         settings = {
           ["rust-analyzer"] = {
             check = {
@@ -196,12 +152,16 @@ return {
         },
       })
 
-      -- Move
-      lspconfig.move_analyzer.setup({
-        capabilities = capabilities,
-        handlers = handlers,
+      vim.lsp.enable({
+        "clangd",
+        "ts_ls",
+        "pyright",
+        "lua_ls",
+        "jdtls",
+        "solidity_ls_nomicfoundation",
+        "rust_analyzer",
+        "move_analyzer",
       })
-
 
       -- Global mappings
       vim.keymap.set("n", "<leader>ld", vim.diagnostic.open_float, { desc = "Line diagnostics" })
