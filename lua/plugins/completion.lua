@@ -121,7 +121,7 @@ return {
       performance = {
         debounce = 60,
         throttle = 30,
-        fetching_timeout = 200,
+        fetching_timeout = 500,
       },
       
       formatting = {
@@ -170,9 +170,7 @@ return {
       },
       
       experimental = {
-        ghost_text = {
-          hl_group = "Comment",
-        },
+        ghost_text = false,
       },
     })
     

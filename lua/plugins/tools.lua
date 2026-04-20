@@ -111,7 +111,7 @@ return {
       
       -- Optional, configure additional syntax highlighting / extmarks.
       ui = {
-        enable = true,
+        enable = false,
         update_debounce = 200,
         -- Define how various check-boxes are displayed
         checkboxes = {

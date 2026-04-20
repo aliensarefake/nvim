@@ -94,7 +94,7 @@ local function toggle()
   wo.spell = false
   wo.wrap = true
   wo.cursorline = true
-  wo.conceallevel = 3
+  wo.conceallevel = 2
   wo.concealcursor = "nc"
 
   set_close_keymaps(state.buf)
