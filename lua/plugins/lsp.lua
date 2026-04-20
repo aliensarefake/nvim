@@ -94,6 +94,9 @@ return {
       })
 
       vim.lsp.config("pyright", {
+        flags = {
+          debounce_text_changes = 1500,
+        },
         settings = {
           python = {
             analysis = {
@@ -160,13 +163,12 @@ return {
         "jdtls",
         "solidity_ls_nomicfoundation",
         "rust_analyzer",
-        "move_analyzer",
       })
 
       -- Global mappings
       vim.keymap.set("n", "<leader>ld", vim.diagnostic.open_float, { desc = "Line diagnostics" })
-      vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "Previous diagnostic" })
-      vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "Next diagnostic" })
+      vim.keymap.set("n", "[d", function() vim.diagnostic.jump({ count = -1, float = false }) end, { desc = "Previous diagnostic" })
+      vim.keymap.set("n", "]d", function() vim.diagnostic.jump({ count = 1, float = false }) end, { desc = "Next diagnostic" })
       vim.keymap.set("n", "<leader>lq", vim.diagnostic.setloclist, { desc = "Diagnostic loclist" })
 
       -- Use LspAttach autocommand to only map after the language server attaches
@@ -180,29 +182,7 @@ return {
           local opts = { buffer = ev.buf }
           local telescope_builtin = require("telescope.builtin")
 
-          -- Helper to create filtered telescope with horizontal layout (files left, preview right)
-          local function lsp_dropdown(opts_override)
-            return vim.tbl_deep_extend("force", {
-              layout_strategy = "horizontal",
-              layout_config = {
-                horizontal = {
-                  preview_width = 0.65,  -- Preview takes 65% of width
-                  results_width = 0.35,  -- File list takes 35% of width
-                  width = 0.95,          -- Use 95% of screen width
-                  height = 0.85,         -- Use 85% of screen height
-                  preview_cutoff = 0,    -- Always show preview
-                },
-              },
-              sorting_strategy = "ascending",  -- Results at top
-              initial_mode = "normal",
-              prompt_prefix = " ",
-              selection_caret = "> ",
-              -- Border characters for better visibility
-              borderchars = {
-                "─", "│", "─", "│", "╭", "╮", "╯", "╰",
-              },
-            }, opts_override or {})
-          end
+          local lsp_dropdown = require("config.telescope-layout").lsp_dropdown
 
           -- gr* pattern for LSP navigation with Telescope
           vim.keymap.set("n", "grD", vim.lsp.buf.declaration, vim.tbl_extend("force", opts, { desc = "Go to declaration" }))

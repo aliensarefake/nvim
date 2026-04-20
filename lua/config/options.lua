@@ -26,6 +26,8 @@ opt.ignorecase = true -- Ignore case when searching
 opt.smartcase = true -- Override ignorecase if uppercase is used
 opt.hlsearch = true -- Highlight search results
 opt.incsearch = true -- Show matches while typing
+opt.grepprg = "rg --vimgrep --smart-case"
+opt.grepformat = "%f:%l:%c:%m"
 
 -- Appearance
 opt.termguicolors = true -- Enable 24-bit RGB colors
@@ -65,7 +67,7 @@ opt.foldenable = true -- Enable folding
 opt.clipboard = "unnamedplus" -- Use system clipboard
 opt.mouse = "a" -- Enable mouse support
 opt.cmdheight = 1 -- Command line height
-opt.conceallevel = 3 -- Show concealed text
+-- conceallevel scoped to markdown in autocmds.lua (avoids hiding JSON/YAML syntax)
 opt.laststatus = 3 -- Global statusline
 opt.fillchars = { eob = " " } -- Remove ~ from empty lines
 opt.formatoptions:remove({ "c", "r", "o" }) -- Don't auto-continue comments

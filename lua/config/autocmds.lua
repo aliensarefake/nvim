@@ -14,7 +14,7 @@ augroup("YankHighlight", { clear = true })
 autocmd("TextYankPost", {
   group = "YankHighlight",
   callback = function()
-    vim.highlight.on_yank({ 
+    (vim.hl or vim.highlight).on_yank({
       higroup = "IncSearch", 
       timeout = 150,
       on_visual = false,
@@ -51,9 +51,9 @@ autocmd("BufWritePre", {
     if event.match:match("^%w+://") then
       return
     end
-    local file = vim.loop.fs_realpath(event.match) or event.match
+    local file = vim.uv.fs_realpath(event.match) or event.match
     local dir = vim.fn.fnamemodify(file, ":p:h")
-    if not vim.loop.fs_stat(dir) then
+    if not vim.uv.fs_stat(dir) then
       vim.fn.mkdir(dir, "p")
     end
   end,
@@ -96,6 +96,7 @@ autocmd("FileType", {
   callback = function()
     vim.opt_local.wrap = true
     vim.opt_local.spell = false
+    vim.opt_local.conceallevel = 2
   end,
 })
 

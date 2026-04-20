@@ -3,7 +3,7 @@
 
 -- Bootstrap lazy.nvim plugin manager
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
   vim.fn.system({
     "git",
     "clone",
@@ -33,3 +33,12 @@ require("config.autocmds")
 
 -- Load highlight fix
 require("config.highlight-fix").setup()
+
+-- Load utility functions (quick capture, macro helpers)
+require("config.utils").setup()
+
+-- Load daily tasks popup
+require("config.dailies").setup()
+
+-- Load flashcard SRS
+require("config.flashcards").setup()
