@@ -99,6 +99,19 @@ keymap("n", "<leader>lr", function()
   vim.opt.relativenumber = not vim.opt.relativenumber:get()
 end, { desc = "Toggle relative line numbers" })
 
+-- Toggle diagnostics (per-buffer). Useful for muting pyright/eslint on WIP code.
+keymap("n", "<leader>ud", function()
+  local on = vim.diagnostic.is_enabled({ bufnr = 0 })
+  vim.diagnostic.enable(not on, { bufnr = 0 })
+  vim.notify("Diagnostics " .. (on and "off" or "on") .. " for buffer", vim.log.levels.INFO)
+end, { desc = "Toggle diagnostics (buffer)" })
+
+keymap("n", "<leader>uD", function()
+  local on = vim.diagnostic.is_enabled()
+  vim.diagnostic.enable(not on)
+  vim.notify("Diagnostics " .. (on and "off" or "on") .. " globally", vim.log.levels.INFO)
+end, { desc = "Toggle diagnostics (global)" })
+
 -- Center cursor after jumping
 keymap("n", "<C-d>", "<C-d>zz", opts)
 keymap("n", "<C-u>", "<C-u>zz", opts)
