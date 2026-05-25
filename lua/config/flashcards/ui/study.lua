@@ -31,8 +31,24 @@ function M.study(cards_dir, opts)
   end
 
   if #due == 0 then
-    vim.notify("flashcards: no cards due for review", vim.log.levels.INFO)
-    return
+    if opts.force then
+      for _, deck in ipairs(decks) do
+        for _, c in ipairs(deck.cards) do
+          table.insert(due, { card = c, deck = deck.name })
+        end
+      end
+      if #due == 0 then
+        vim.notify("flashcards: no cards found", vim.log.levels.WARN)
+        return
+      end
+    else
+      vim.ui.select({ "Review ahead (all cards)", "Cancel" }, { prompt = "No cards due." }, function(_, i)
+        if i == 1 then
+          M.study(cards_dir, vim.tbl_extend("force", opts, { force = true }))
+        end
+      end)
+      return
+    end
   end
 
   for i = #due, 2, -1 do

@@ -88,13 +88,12 @@ autocmd("BufEnter", {
   command = "set formatoptions-=cro",
 })
 
--- Wrap text in markdown and gitcommit files
 augroup("WrapText", { clear = true })
 autocmd("FileType", {
   group = "WrapText",
   pattern = { "markdown", "gitcommit" },
   callback = function()
-    vim.opt_local.wrap = true
+    -- vim.opt_local.wrap = true
     vim.opt_local.spell = false
     vim.opt_local.conceallevel = 2
   end,
